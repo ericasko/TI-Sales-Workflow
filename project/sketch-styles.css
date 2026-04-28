@@ -1,0 +1,337 @@
+/* Sketch system — handwritten + clean lines, b&w + muted status colors only */
+
+:root {
+  --ink: #1a1a1a;
+  --ink-soft: #4a4a4a;
+  --ink-faint: #8a8a8a;
+  --ink-ghost: #c4c4c4;
+  --paper: #fdfcf8;
+  --paper-warm: #f7f4ec;
+  --line: #2a2a2a;
+  --line-soft: #6a6a6a;
+
+  /* muted status — ONLY use case for color */
+  --ok: #6a8e5a;     /* moss green */
+  --warn: #c89a3a;   /* amber */
+  --bad: #b85a4a;    /* terracotta */
+  --ok-bg: #eaf0e3;
+  --warn-bg: #f5ebd2;
+  --bad-bg: #f2dad4;
+}
+
+.sketch {
+  font-family: "Caveat", "Bradley Hand", "Segoe Script", cursive;
+  color: var(--ink);
+}
+
+.hand {
+  font-family: "Architects Daughter", "Caveat", "Bradley Hand", cursive;
+}
+
+.mono {
+  font-family: "JetBrains Mono", "Courier New", monospace;
+}
+
+/* ── sketchy borders: hand-drawn looking using filter + irregular borders ── */
+.sk-border {
+  border: 1.5px solid var(--line);
+  border-radius: 4px 6px 5px 7px / 6px 4px 7px 5px;
+  background: var(--paper);
+  position: relative;
+}
+
+.sk-border-soft {
+  border: 1px solid var(--line-soft);
+  border-radius: 3px 5px 4px 6px / 5px 3px 6px 4px;
+  background: var(--paper);
+}
+
+.sk-border-thick {
+  border: 2.5px solid var(--line);
+  border-radius: 5px 7px 6px 8px / 7px 5px 8px 6px;
+  background: var(--paper);
+}
+
+/* clean variant — used when "sketchy" toggle is off */
+.clean .sk-border,
+.clean .sk-border-soft,
+.clean .sk-border-thick {
+  border-radius: 4px;
+  border-width: 1px;
+  border-color: #d4d4d4;
+}
+.clean .sk-border-thick { border-width: 1.5px; border-color: #999; }
+
+.clean .sketch,
+.clean .hand {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* squiggly underline — like handdrawn */
+.squiggle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='4'%3E%3Cpath d='M0 2 Q5 0 10 2 T20 2 T30 2 T40 2' fill='none' stroke='%231a1a1a' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: 0 100%;
+  padding-bottom: 4px;
+}
+.clean .squiggle {
+  background-image: none;
+  text-decoration: underline;
+  text-decoration-color: #999;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* hatched fill — for "image goes here" placeholders */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0,0,0,0.08) 4px,
+    rgba(0,0,0,0.08) 5px
+  );
+}
+
+/* dot — confidence indicator */
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  flex-shrink: 0;
+}
+.clean .dot { border-width: 1px; }
+.dot.ok   { background: var(--ok); }
+.dot.warn { background: var(--warn); }
+.dot.bad  { background: var(--bad); }
+
+/* status pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1.2px solid var(--line);
+  border-radius: 10px 12px 11px 13px / 12px 10px 13px 11px;
+  font-size: 11px;
+  background: var(--paper);
+}
+.clean .pill { border-radius: 10px; border-width: 1px; border-color: #d4d4d4; }
+
+/* trigger icons — drawn inline as SVG, sized small */
+.trig-ico {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: var(--ink);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* table */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th, .tbl td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ink-ghost);
+  font-size: 13px;
+  vertical-align: top;
+}
+.tbl th {
+  font-family: "Architects Daughter", cursive;
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--ink);
+}
+.clean .tbl th {
+  font-family: -apple-system, sans-serif;
+  font-weight: 600;
+  border-bottom-width: 1px;
+  border-bottom-color: #d4d4d4;
+}
+.clean .tbl th, .clean .tbl td {
+  border-bottom-color: #ececec;
+}
+
+.tbl tr.selected td { background: #fffbe8; }
+.tbl tr:hover td { background: rgba(0,0,0,0.02); }
+
+.row-hl { background: #fffbe8; }
+
+/* sketchy keyboard key */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1.2px solid var(--ink);
+  border-radius: 3px 5px 4px 6px / 5px 3px 6px 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  background: var(--paper);
+}
+.clean .kbd { border-radius: 3px; border-width: 1px; border-color: #c4c4c4; }
+
+/* avatar circle */
+.av {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Architects Daughter", cursive;
+  font-size: 11px;
+  background: var(--paper-warm);
+  flex-shrink: 0;
+}
+.clean .av { border-width: 1px; border-color: #c4c4c4; font-family: -apple-system, sans-serif; font-weight: 500; }
+
+/* checkbox */
+.cb {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px 3px 2px 3px / 3px 2px 3px 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  flex-shrink: 0;
+}
+.cb.checked::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 5 L4 8 L9 2' fill='none' stroke='%231a1a1a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: contain;
+}
+.clean .cb { border-width: 1px; border-color: #999; border-radius: 2px; }
+
+/* button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 1.5px solid var(--ink);
+  border-radius: 5px 7px 6px 8px / 7px 5px 8px 6px;
+  background: var(--paper);
+  font-family: "Architects Daughter", cursive;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.btn:hover { background: var(--paper-warm); }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover { background: #000; }
+.btn.ghost { border-color: var(--ink-faint); color: var(--ink-soft); }
+
+.clean .btn {
+  font-family: -apple-system, sans-serif;
+  font-weight: 500;
+  border-radius: 5px;
+  border-width: 1px;
+  border-color: #c4c4c4;
+}
+.clean .btn.primary { border-color: var(--ink); }
+
+/* annotation highlight — for inline rationale linkage */
+.anno {
+  background: linear-gradient(transparent 60%, #fff3a8 60%);
+  cursor: pointer;
+  border-bottom: 1px dotted var(--ink-soft);
+  padding: 0 1px;
+}
+.anno.active { background: linear-gradient(transparent 60%, #ffe066 60%); }
+.anno.flag { background: linear-gradient(transparent 60%, #f2dad4 60%); border-bottom-color: var(--bad); }
+
+.clean .anno { border-bottom-style: solid; }
+
+/* annotation badge — number circle */
+.anno-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.2px solid var(--ink);
+  background: var(--paper);
+  font-family: "Architects Daughter", cursive;
+  font-size: 10px;
+  margin: 0 2px;
+  vertical-align: 1px;
+}
+.clean .anno-num { font-family: -apple-system, sans-serif; font-weight: 600; }
+
+/* drawer card */
+.drawer {
+  background: var(--paper);
+  border-left: 2px solid var(--ink);
+  box-shadow: -8px 0 24px rgba(0,0,0,0.06);
+}
+.clean .drawer { border-left-width: 1px; border-left-color: #d4d4d4; }
+
+/* scribble divider */
+.divider-scribble {
+  height: 6px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='6' viewBox='0 0 100 6'%3E%3Cpath d='M0 3 Q12 1 25 3 T50 3 T75 3 T100 3' fill='none' stroke='%23999' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+}
+.clean .divider-scribble {
+  background-image: none;
+  border-top: 1px solid #ececec;
+  height: 0;
+}
+
+/* annotation note (on side of email) */
+.anno-note {
+  position: relative;
+  padding-left: 26px;
+  font-family: "Caveat", cursive;
+  font-size: 15px;
+  color: var(--ink-soft);
+  line-height: 1.3;
+}
+.clean .anno-note { font-family: -apple-system, sans-serif; font-size: 12.5px; line-height: 1.45; }
+.anno-note .anno-num { position: absolute; left: 0; top: 1px; }
+
+/* arrow drawn between annotation and email */
+.anno-arrow {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* tab bar */
+.tab {
+  padding: 6px 10px;
+  font-family: "Architects Daughter", cursive;
+  font-size: 12px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.tab.on { color: var(--ink); border-bottom-color: var(--ink); }
+.clean .tab { font-family: -apple-system, sans-serif; font-weight: 500; }
+
+/* --- annotation mode: show side-margin arrows visibly --- */
+.no-annos .anno {
+  background: none !important;
+  border-bottom: none !important;
+}
+.no-annos .anno-num,
+.no-annos .anno-note,
+.no-annos .anno-rail {
+  display: none !important;
+}

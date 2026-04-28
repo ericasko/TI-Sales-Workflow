@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>TI Sales — Workbench (hi-fi)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="hf-styles.css" />
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
+  .frame { position: relative; overflow: hidden; background: #f5f6f8; border-radius: 10px; box-shadow: 0 1px 2px rgba(14,17,22,0.06), 0 8px 32px rgba(14,17,22,0.06); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="hf-data.jsx"></script>
+<script type="text/babel" src="hf-feed.jsx"></script>
+<script type="text/babel" src="hf-queue.jsx"></script>
+<script type="text/babel" src="hf-drawer.jsx"></script>
+<script type="text/babel" src="hf-workbench.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "showAnnotations": true,
+  "openDraftId": "d2"
+}/*EDITMODE-END*/;
+
+function Frame({ children, w, h }) {
+  return <div className="frame" style={{ width: w, height: h }}>{children}</div>;
+}
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [openMain, setOpenMain] = React.useState(null);
+
+  React.useEffect(() => {
+    document.body.classList.toggle("no-annos", !tweaks.showAnnotations);
+  }, [tweaks.showAnnotations]);
+
+  const W = 1480, H = 920;
+
+  return (
+    <>
+      <DesignCanvas>
+        <DCSection id="hifi" title="Workbench · hi-fi" subtitle="Cool slate neutrals, single TI-red accent. Channels: Quotes · Orders · TI.com · E2E. Feed sits in a card with whitespace gutters.">
+          <DCArtboard id="default" label="Default — feed left, queue right" width={W} height={H}>
+            <Frame w={W} h={H}><HFWorkbench openId={openMain} setOpenId={setOpenMain} /></Frame>
+          </DCArtboard>
+          <DCArtboard id="drawer" label="Drawer — slides over from the right (Priya · flagged variant)" width={W} height={H}>
+            <Frame w={W} h={H}><HFWorkbench openId={tweaks.openDraftId} setOpenId={() => {}} /></Frame>
+          </DCArtboard>
+          <DCArtboard id="aggregate" label="Drawer — Acme aggregate signal (3 engineers)" width={W} height={H}>
+            <Frame w={W} h={H}><HFWorkbench openId={"d3"} setOpenId={() => {}} /></Frame>
+          </DCArtboard>
+        </DCSection>
+
+        <DCPostIt top={70} left={1540} rotate={2} width={230}>
+          Hi-fi pass. Channels collapsed to 4: Q · O · T · E. Feed lives in a card with breathing room. Drawer slides over the queue.
+        </DCPostIt>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Display">
+          <TweakToggle label="Show inline annotations" value={tweaks.showAnnotations} onChange={(v) => setTweak("showAnnotations", v)} />
+        </TweakSection>
+        <TweakSection title="Drawer demo">
+          <TweakSelect label="Open draft" value={tweaks.openDraftId} onChange={(v) => setTweak("openDraftId", v)}
+            options={[
+              { value: "d1", label: "d1 · Marcus (high)" },
+              { value: "d2", label: "d2 · Priya (flagged)" },
+              { value: "d3", label: "d3 · Acme (aggregate)" },
+              { value: "d4", label: "d4 · Jen Tobias" },
+              { value: "d7", label: "d7 · Owen (low)" },
+            ]} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
