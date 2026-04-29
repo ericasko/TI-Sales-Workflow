@@ -34,6 +34,7 @@ src/
     LogSignalModal.jsx          // modal: rep logs a call/meeting/note as historical context
 project/                        // ORIGINAL Claude Design prototype files - reference only, do not edit
 chats/chat1.md                  // design conversation that produced the prototype
+docs/architecture.md            // backend architecture overview for engineering & product
 ```
 
 ## Design system (cheat sheet)
