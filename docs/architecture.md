@@ -17,7 +17,10 @@ Audience: engineering and product partners. Use this to scope teams, services, a
 
 ## System overview
 
+The whole system at a glance — six logical regions plus the feedback loop.
+
 ```mermaid
+%%{init: {'flowchart': {'htmlLabels': true}, 'themeVariables': {'fontSize': '17px'}}}%%
 flowchart LR
     classDef src    fill:#fdecec,stroke:#b6433d,color:#0e1116
     classDef store  fill:#f0f2f5,stroke:#5b6573,color:#0e1116
@@ -27,100 +30,130 @@ flowchart LR
     classDef out    fill:#e7f4ee,stroke:#2d7a52,color:#0e1116
     classDef fb     fill:#dff0f3,stroke:#0c7691,color:#0e1116
 
-    %% ── Sources ────────────────────────────
-    subgraph Sources["📥 Data Sources"]
-        Q[Quote system]
-        O[Order system<br/><i>samples · EVMs</i>]
-        T[TI.com analytics<br/><i>datasheets · app notes ·<br/>product folders</i>]
-        E[E2E forum]
-        EM[Email mailboxes<br/><i>Outlook / Exchange / IMAP</i>]
-        ML[Rep manual logs<br/><i>calls · meetings · notes</i>]
-    end
-    class Q,O,T,E,EM,ML src
+    Sources["📥 Data Sources"]:::src
+    Ingest["🔄 Ingestion &amp; Storage"]:::store
+    AI["🧠 AI Processing"]:::ai
+    Policy["⚖️ Routing &amp; Policy"]:::policy
+    UI["🖥 Workbench UI"]:::ui
+    Outbound["📤 Outbound Actions"]:::out
+    FB["♻️ Feedback Loop"]:::fb
 
-    %% ── Ingestion & Storage ────────────────
-    N[Event Normalizer<br/><i>schema, identity, dedupe</i>]
-    SL[(Signal Log<br/>append-only)]
-    CG[(Contact &amp; Account<br/>Graph)]
-    TS[(Email Thread<br/>Store)]
-    AT[(Activity<br/>Timeline)]
-    class SL,CG,TS,AT store
+    Sources --> Ingest --> AI --> Policy
+    Policy -->|conf ≥ threshold| Outbound
+    Policy -->|review needed| UI
+    UI -->|approve / send| Outbound
+    UI -.captures.-> FB
+    FB -.training.-> AI
+```
 
-    Q & O & T & E & EM & ML --> N
+The next three diagrams drill into each layer.
+
+### Ingestion &amp; storage
+
+How raw events from the seven inputs become a unified signal stream.
+
+```mermaid
+%%{init: {'flowchart': {'htmlLabels': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+flowchart LR
+    classDef src    fill:#fdecec,stroke:#b6433d,color:#0e1116
+    classDef store  fill:#f0f2f5,stroke:#5b6573,color:#0e1116
+
+    Q[Quote system]:::src
+    O[Order system]:::src
+    T[TI.com analytics]:::src
+    E[E2E forum]:::src
+    EM[Email mailboxes]:::src
+    ML[Manual rep logs]:::src
+
+    N[Event Normalizer]
+    SL[(Signal Log)]:::store
+    CG[(Contact &amp; Account Graph)]:::store
+    TS[(Email Thread Store)]:::store
+    AT[(Activity Timeline)]:::store
+
+    Q --> N
+    O --> N
+    T --> N
+    E --> N
+    EM --> N
+    ML --> N
     N --> SL
     N --> CG
     EM --> TS
     SL --> AT
+```
 
-    %% ── AI Processing ──────────────────────
-    subgraph AI["🧠 AI Processing"]
-        PD[Pattern Detector<br/><i>cross-signal synthesis</i>]
-        TR[Trigger Evaluator<br/><i>worth an action?</i>]
-        AR[Action Router<br/><i>email · call · loop-BU ·<br/>intro-FAE · human</i>]
-        CS[Confidence Scorer]
-        DG[Draft Generator<br/><i>LLM</i>]
-        AN[Annotation Builder<br/><i>phrase ↔ source</i>]
-    end
-    class PD,TR,AR,CS,DG,AN ai
+### AI processing
+
+What turns signals into drafted actions.
+
+```mermaid
+%%{init: {'flowchart': {'htmlLabels': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+flowchart LR
+    classDef ai    fill:#fcf2e0,stroke:#b97509,color:#0e1116
+    classDef store fill:#f0f2f5,stroke:#5b6573,color:#0e1116
+
+    SL[(Signal Log)]:::store
+    CG[(Contact Graph)]:::store
+    TS[(Email Threads)]:::store
+
+    PD[Pattern Detector]:::ai
+    TR[Trigger Evaluator]:::ai
+    AR[Action Router]:::ai
+    CS[Confidence Scorer]:::ai
+    DG[Draft Generator]:::ai
+    AN[Annotation Builder]:::ai
 
     SL --> PD
     PD -.synth signal.-> SL
-    SL --> TR
-    TR --> AR
-    AR --> CS
-    CS --> DG
-    DG --> AN
+    SL --> TR --> AR --> CS --> DG --> AN
     CG -.context.-> DG
-    TS -.prior thread.-> DG
-    AT -.history.-> DG
+    TS -.thread.-> DG
+```
 
-    %% ── Policy ─────────────────────────────
-    subgraph Policy["⚖️ Routing &amp; Policy"]
-        RE[Rules Engine<br/><i>VIP · pricing · legal ·<br/>per-account overrides</i>]
-        AS{Confidence<br/>≥ threshold?}
-    end
-    class RE,AS policy
+### Routing, surfaces &amp; outbound
 
-    AN --> RE
-    RE --> AS
+How drafts get to the rep, and what happens when they're approved.
 
-    %% ── Outputs ────────────────────────────
-    AS -->|yes, autonomous| SE[Email · SMTP/Exchange]
-    AS -->|no, queue for review| AQ
+```mermaid
+%%{init: {'flowchart': {'htmlLabels': true}, 'themeVariables': {'fontSize': '15px'}}}%%
+flowchart LR
+    classDef ai     fill:#fcf2e0,stroke:#b97509,color:#0e1116
+    classDef policy fill:#f1e8f4,stroke:#8a4a9a,color:#0e1116
+    classDef ui     fill:#e8eef8,stroke:#4a6cb3,color:#0e1116
+    classDef out    fill:#e7f4ee,stroke:#2d7a52,color:#0e1116
+    classDef fb     fill:#dff0f3,stroke:#0c7691,color:#0e1116
+
+    AN[Annotated Draft]:::ai
+    RE[Rules Engine]:::policy
+    AS{Confidence<br/>≥ threshold?}:::policy
+
+    AQ[Action Queue]:::ui
+    DR[Drawer]:::ui
+    AD[Auto-sent Digest]:::ui
+
+    SE[Email send]:::out
+    CAL[Calendar]:::out
+    PIM[BU notify]:::out
+    FAE[FAE routing]:::out
+
+    FB[Feedback]:::fb
+
+    AN --> RE --> AS
+    AS -->|yes| SE
+    AS -->|no| AQ
     RE -->|force human| AQ
 
-    subgraph Workbench["🖥 Workbench UI"]
-        SF[Signals Feed]
-        AQ[Action Queue]
-        DR[Drawer<br/><i>rationale · annotations ·<br/>thread · contact intel</i>]
-        AD[Auto-sent Digest]
-    end
-    class SF,AQ,DR,AD ui
-
-    SL --> SF
-    SE --> AD
     AQ --> DR
-    AT -.read.-> DR
-    TS -.read.-> DR
-    CG -.read.-> DR
+    SE --> AD
 
-    %% ── Outbound ───────────────────────────
-    AQ -->|Approve &amp; Send| SE
-    AQ -->|Schedule call| CAL[Calendar]
-    AQ -->|Loop BU| PIM[Internal notify<br/><i>Slack · Teams · email</i>]
-    AQ -->|Intro FAE| FAE[Routing service]
-    class SE,CAL,PIM,FAE out
+    AQ -->|Approve| SE
+    AQ -->|Schedule| CAL
+    AQ -->|Loop BU| PIM
+    AQ -->|Intro| FAE
 
-    %% ── Feedback ───────────────────────────
-    FB[Feedback Capture<br/><i>edits · approvals ·<br/>rejections · manual adds</i>]
-    class FB fb
-
-    AQ -.->|approve / reject / edit / defer| FB
-    DR -.->|edits to body| FB
-    SF -.->|manual log| FB
-    FB -.training signal.-> CS
-    FB -.training signal.-> DG
-    FB -.training signal.-> AR
+    AQ -.edits / decisions.-> FB
+    DR -.body edits.-> FB
 ```
 
 ### What each region does
@@ -152,6 +185,7 @@ flowchart LR
 End-to-end for a single inbound event (a customer submitting a quote):
 
 ```mermaid
+%%{init: {'sequence': {'actorFontSize': 15, 'noteFontSize': 14, 'messageFontSize': 14}}}%%
 sequenceDiagram
     autonumber
     participant Source as Quote System
