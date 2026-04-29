@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DRAFTS, CHANNELS } from '../data/index.js';
+import { DRAFTS, CHANNELS, THREADS } from '../data/index.js';
 
 const ANNOS = {
   d2: [
@@ -272,16 +272,39 @@ export default function HFDrawer({ draftId, onClose, allIds }) {
             <div className="micro" style={{ marginBottom: 10 }}>Contact intelligence</div>
             <div style={{ borderBottom: "1px solid var(--line)", marginBottom: 14 }}>
               <div style={{ display: "flex" }}>
-                {[["activity", "Activity timeline"], ["convo", "Conversation history"], ["company", "Company context"]].map(([k, label]) => (
-                  <div
-                    key={k}
-                    className={"nav-tab" + (tab === k ? " on" : "")}
-                    onClick={() => setTab(k)}
-                    style={{ padding: "9px 0", marginRight: 22 }}
-                  >
-                    {label}
-                  </div>
-                ))}
+                {(() => {
+                  const threadCount = (THREADS[d.id] || []).length;
+                  return [
+                    ["activity", "Activity timeline", null],
+                    ["convo",    "Conversation history", threadCount > 0 ? threadCount : null],
+                    ["company",  "Company context", null],
+                  ].map(([k, label, count]) => (
+                    <div
+                      key={k}
+                      className={"nav-tab" + (tab === k ? " on" : "")}
+                      onClick={() => setTab(k)}
+                      style={{ padding: "9px 0", marginRight: 22, display: "inline-flex", alignItems: "center", gap: 7 }}
+                    >
+                      {label}
+                      {count != null && (
+                        <span
+                          className="num"
+                          style={{
+                            background: "var(--ch-email)",
+                            color: "#fff",
+                            borderRadius: 9,
+                            padding: "1px 6px",
+                            fontSize: 10.5,
+                            fontWeight: 600,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {count}
+                        </span>
+                      )}
+                    </div>
+                  ));
+                })()}
               </div>
             </div>
 
@@ -306,11 +329,69 @@ export default function HFDrawer({ draftId, onClose, allIds }) {
               </div>
             )}
 
-            {tab === "convo" && (
-              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-4)", fontSize: 13, border: "1px dashed var(--line)", borderRadius: "var(--r)" }}>
-                No prior emails — this is the first reach-out.
-              </div>
-            )}
+            {tab === "convo" && (() => {
+              const thread = THREADS[d.id];
+              if (!thread || thread.length === 0) {
+                return (
+                  <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-4)", fontSize: 13, border: "1px dashed var(--line)", borderRadius: "var(--r)" }}>
+                    No prior emails — this is the first reach-out.
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontSize: 11.5, color: "var(--ink-4)", marginBottom: 2 }}>
+                    <span className="num">{thread.length}</span> message{thread.length === 1 ? "" : "s"} · most recent first
+                  </div>
+                  {thread.map((m, i) => {
+                    const fromThem = m.from === "them";
+                    const senderName = fromThem ? d.rec.name : "Erica Skoglund";
+                    const initials = fromThem ? d.rec.initials : "ES";
+                    const recipientLabel = fromThem ? "→ you" : "→ " + d.rec.name.split(" ")[0];
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          border: "1px solid var(--line)",
+                          borderRadius: "var(--r-lg)",
+                          overflow: "hidden",
+                          background: "var(--surface)",
+                          borderLeft: fromThem ? "3px solid var(--ch-email)" : "1px solid var(--line)",
+                        }}
+                      >
+                        <div style={{
+                          padding: "10px 14px",
+                          background: fromThem ? "var(--surface-2)" : "var(--surface)",
+                          borderBottom: "1px solid var(--line)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                        }}>
+                          <div className="av sm">{initials}</div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+                              {senderName}
+                              <span style={{ fontWeight: 400, color: "var(--ink-4)", marginLeft: 6 }}>
+                                {recipientLabel}
+                              </span>
+                            </div>
+                          </div>
+                          {fromThem && (
+                            <span className="chip" style={{ background: "var(--ch-email)", color: "#fff", fontSize: 10.5, height: 18, padding: "1px 7px" }}>
+                              Reply
+                            </span>
+                          )}
+                          <span className="num" style={{ fontSize: 11.5, color: "var(--ink-4)" }}>{m.date}</span>
+                        </div>
+                        <div style={{ padding: "12px 14px", fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                          {m.body}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
             {tab === "company" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>

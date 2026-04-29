@@ -54,6 +54,24 @@ export const SIGNALS = [
   { id: "s14", time: "Mon 11a",  ch: "web",   who: "Theo Falk",       co: "LumenStack",         text: "TPS6521905 ds · viewed",                                    draftId: "d9", weight: "weak"   },
 ];
 
+// Email threads keyed by draftId — present only for contacts where there's prior history
+// (typically derived from email-channel signals on the feed).
+export const THREADS = {
+  d1: [
+    { from: "them", date: "Apr 28, 9:08 AM", body: "Thanks — got the datasheet, will review.\n\n— Marcus" },
+    { from: "us",   date: "Apr 25, 4:12 PM", body: "Hi Marcus — sending the TPS6521905 datasheet from our call. §7.3 has the layout requirements for the RGE QFN package — that's the section worth focusing on for the inductor placement question.\n\nLet me know if you want me to pull the PMP40123 reference design too.\n\n— Erica" },
+  ],
+  d2: [
+    { from: "them", date: "Apr 28, 9:55 AM", body: "Hi Erica — quick follow-up. We're actually using the PW (TSSOP) variant, not RGZ. Can you send the layout guide for PW? Also wondering about the FB divider trace differences — the datasheet section is a little thin there.\n\n— Priya" },
+    { from: "us",   date: "Apr 22, 10:12 AM", body: "Hi Priya — saw the second SLAA660 pull. If you're working on the low-power side of the design, here's the walkthrough we use internally for the MSP430G2553 LaunchPad → battery sensor path.\n\nHoller if the LDO startup sequence behaves oddly — there's a known gotcha around BOR.\n\n— Erica" },
+    { from: "us",   date: "Apr 14, 8:45 AM", body: "Hi Priya — your MSP-EXP430G2ET shipped today. Full kit + the SLAA660 walkthrough should get you running by end of week. Reach out anytime.\n\n— Erica" },
+  ],
+  d4: [
+    { from: "them", date: "Apr 27, 5:00 PM", body: "Erica — yes, this is timely. I'm hitting some weirdness with the I²C ACK on BQ25895 in fast-charge mode. Can we set up a 30-min call next Tue? Open mid-afternoon.\n\n— Jen" },
+    { from: "us",   date: "Apr 27, 9:30 AM", body: "Hi Jen — I noticed you've been pulling the BQ25895 datasheet a few times this week. The I²C control register layout (especially around REG07) is the part most teams ask about — happy to walk through it if useful.\n\n— Erica" },
+  ],
+};
+
 export const SYNTH_INSIGHTS = [
   { id: "i1", title: "Acme Robotics — buck regulator convergence",   body: "Three engineers (M. Kapoor, J. Lin, S. Park) viewed TPS6521905 + LMR33630 within a 30-day window. Pattern suggests platform decision in flight.", co: "Acme Robotics",     sigCount: 8, draftId: "d3" },
   { id: "i2", title: "Northfield Sense — sustained engagement",       body: "Priya: EVM ordered → 2× app-note pulls → datasheet revisits. Momentum building toward design-in.",                                                  co: "Northfield Sense", sigCount: 4, draftId: "d2" },
