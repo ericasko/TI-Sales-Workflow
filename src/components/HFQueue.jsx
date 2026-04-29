@@ -211,7 +211,7 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
         <span className="col-h"></span>
         <span className="col-h">Recipient</span>
         <span className="col-h">Why now</span>
-        <span className="col-h">Subject · preview</span>
+        <span className="col-h">Action · subject</span>
         <span className="col-h">Confidence</span>
         <span className="col-h" style={{ textAlign: "right" }}>Actions</span>
       </div>
