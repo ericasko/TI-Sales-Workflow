@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SIGNALS, DRAFTS } from '../data/index.js';
 import HFFeed from './HFFeed.jsx';
 import HFQueue from './HFQueue.jsx';
 import HFDrawer from './HFDrawer.jsx';
 
 const DRAFT_IDS = DRAFTS.map(d => d.id);
+const PILOT_NUMS = [1, 2, 3];
 
 export default function HFWorkbench() {
   const [openId, setOpenId] = useState(null);
@@ -12,6 +13,26 @@ export default function HFWorkbench() {
   // signals) used to cross-highlight rows on both sides of the workbench.
   const [hoverContact, setHoverContact] = useState(null);
   const [channelFilter, setChannelFilter] = useState("all");
+  const [pilots, setPilots] = useState({ 1: true, 2: false, 3: false });
+  const [pilotsOpen, setPilotsOpen] = useState(false);
+  const pilotsRef = useRef(null);
+
+  const togglePilot = (n) => setPilots(p => ({ ...p, [n]: !p[n] }));
+  const selectedPilots = PILOT_NUMS.filter(n => pilots[n]);
+  const pilotLabel =
+    selectedPilots.length === 0 ? "Select pilot…" :
+    selectedPilots.length === 1 ? `OMM Pilot ${selectedPilots[0]}` :
+    selectedPilots.length === PILOT_NUMS.length ? `All ${PILOT_NUMS.length} pilots` :
+    `OMM Pilots ${selectedPilots.join(", ")}`;
+
+  useEffect(() => {
+    if (!pilotsOpen) return;
+    const onDown = (e) => {
+      if (pilotsRef.current && !pilotsRef.current.contains(e.target)) setPilotsOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [pilotsOpen]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -59,14 +80,69 @@ export default function HFWorkbench() {
           <span className="nav-tab">Team</span>
         </div>
         <div style={{ flex: 1 }} />
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+        <div ref={pilotsRef} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
           <span>Book of biz:</span>
-          <button className="btn sm">
-            Power IC · West
-            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          <button className="btn sm" onClick={() => setPilotsOpen(o => !o)}>
+            {pilotLabel}
+            <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" style={{ transform: pilotsOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
               <path d="M2 4l3 3 3-3"/>
             </svg>
           </button>
+          {pilotsOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                right: 0,
+                minWidth: 200,
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r)",
+                boxShadow: "var(--shadow-lg)",
+                padding: 4,
+                zIndex: 20,
+              }}
+            >
+              <div className="micro" style={{ padding: "8px 10px 6px" }}>Book of business</div>
+              {PILOT_NUMS.map(n => (
+                <div
+                  key={n}
+                  onClick={() => togglePilot(n)}
+                  style={{
+                    padding: "7px 10px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                    borderRadius: "var(--r-sm)",
+                    transition: "background .1s",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "var(--surface-3)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <span className={"cb " + (pilots[n] ? "checked" : "")} />
+                  <span style={{ fontSize: 12.5, color: "var(--ink)" }}>OMM Pilot {n}</span>
+                </div>
+              ))}
+              <div style={{ height: 1, background: "var(--line)", margin: "4px 0" }} />
+              <div style={{ display: "flex", gap: 4, padding: "2px 4px 4px" }}>
+                <button
+                  className="btn xs ghost"
+                  onClick={() => setPilots({ 1: true, 2: true, 3: true })}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Select all
+                </button>
+                <button
+                  className="btn xs ghost"
+                  onClick={() => setPilots({ 1: false, 2: false, 3: false })}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <button className="btn sm ghost icon" title="Search">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
