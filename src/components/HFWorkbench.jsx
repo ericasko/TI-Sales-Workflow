@@ -8,14 +8,10 @@ const DRAFT_IDS = DRAFTS.map(d => d.id);
 
 export default function HFWorkbench() {
   const [openId, setOpenId] = useState(null);
-  const [hoverSignal, setHoverSignal] = useState(null);
-  const [hoverDraft, setHoverDraft] = useState(null);
+  // hoverContact = a contact identifier (person name, or company for synth/aggregate
+  // signals) used to cross-highlight rows on both sides of the workbench.
+  const [hoverContact, setHoverContact] = useState(null);
   const [channelFilter, setChannelFilter] = useState("all");
-
-  const sig = SIGNALS.find(s => s.id === hoverSignal);
-  const hoverSignalDraft = sig ? sig.draftId : null;
-  const effectiveHoverDraft = hoverSignalDraft || hoverDraft;
-  const effectiveHover = hoverSignal || (hoverDraft ? (SIGNALS.find(s => s.draftId === hoverDraft) || {}).id : null);
 
   // Keyboard navigation
   useEffect(() => {
@@ -110,9 +106,8 @@ export default function HFWorkbench() {
       {/* Two-column body */}
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.05fr)", gap: 20, padding: "0 28px 24px", minHeight: 0 }}>
         <HFFeed
-          hover={effectiveHover}
-          setHover={setHoverSignal}
-          hoverDraft={effectiveHoverDraft}
+          hoverContact={hoverContact}
+          setHoverContact={setHoverContact}
           channelFilter={channelFilter}
           setChannelFilter={setChannelFilter}
           onDraftClick={setOpenId}
@@ -120,8 +115,8 @@ export default function HFWorkbench() {
         <HFQueue
           onOpen={id => setOpenId(openId === id ? null : id)}
           openId={openId}
-          hoverSignalDraft={hoverSignalDraft}
-          setHoverDraft={setHoverDraft}
+          hoverContact={hoverContact}
+          setHoverContact={setHoverContact}
         />
       </div>
 

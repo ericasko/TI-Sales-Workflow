@@ -3,7 +3,11 @@ import { CHANNELS, DRAFTS, ACTIONS, ACTION_TYPES } from '../data/index.js';
 
 const CONF_RANK = { ok: 0, warn: 1, bad: 2 };
 
-export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraft }) {
+// Mirror the feed's contact identification — synth/aggregate drafts use the
+// company name (since there's no single recipient).
+const draftContact = (d) => (d.ch === "synth" ? d.rec.company : d.rec.name);
+
+export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact }) {
   const [selected, setSelected] = useState({ d1: true, d3: true, d6: true, d8: true });
   const [sort, setSort] = useState("urgency");
   const [digestOpen, setDigestOpen] = useState(false);
@@ -225,15 +229,16 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
         )}
         {visibleActions.map(d => {
           const ch = CHANNELS[d.ch];
-          const dim = hoverSignalDraft && hoverSignalDraft !== d.id;
-          const lit = hoverSignalDraft && hoverSignalDraft === d.id;
+          const contact = draftContact(d);
+          const dim = hoverContact && contact !== hoverContact;
+          const lit = hoverContact && contact === hoverContact;
           const isOpen = openId === d.id;
           return (
             <div
               key={d.id}
               onClick={() => onOpen(d.id)}
-              onMouseEnter={() => setHoverDraft && setHoverDraft(d.id)}
-              onMouseLeave={() => setHoverDraft && setHoverDraft(null)}
+              onMouseEnter={() => setHoverContact && setHoverContact(contact)}
+              onMouseLeave={() => setHoverContact && setHoverContact(null)}
               className={"queue-row" + (isOpen ? " active" : "") + (lit ? " lit" : "") + (dim ? " dim" : "")}
               style={{ gridTemplateColumns: "16px 12px 1.4fr 1.6fr 2.2fr 0.7fr 90px" }}
             >

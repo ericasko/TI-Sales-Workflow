@@ -6,7 +6,11 @@ const GROUPS = [
   { label: "Mon · Apr 26", items: SIGNALS.filter(s => s.time.startsWith("Mon")) },
 ];
 
-export default function HFFeed({ hover, setHover, hoverDraft, channelFilter, setChannelFilter, onDraftClick }) {
+// For cross-highlight purposes a contact is identified by person name,
+// except for synth/aggregate signals where there's no individual — use company.
+const signalContact = (s) => (s.ch === "synth" ? s.co : s.who);
+
+export default function HFFeed({ hoverContact, setHoverContact, channelFilter, setChannelFilter, onDraftClick }) {
   const filtered = (items) =>
     channelFilter === "all" ? items : items.filter(s => s.ch === channelFilter);
 
@@ -73,13 +77,13 @@ export default function HFFeed({ hover, setHover, hoverDraft, channelFilter, set
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {SYNTH_INSIGHTS.map(ins => {
-            const isHovered = hoverDraft === ins.draftId;
+            const isHovered = hoverContact === ins.co;
             return (
               <div
                 key={ins.id}
                 onClick={() => onDraftClick && onDraftClick(ins.draftId)}
-                onMouseEnter={() => setHover && setHover("s4")}
-                onMouseLeave={() => setHover && setHover(null)}
+                onMouseEnter={() => setHoverContact && setHoverContact(ins.co)}
+                onMouseLeave={() => setHoverContact && setHoverContact(null)}
                 style={{
                   background: isHovered ? "#fff8df" : "var(--surface)",
                   border: "1px solid " + (isHovered ? "var(--warn)" : "var(--line)"),
@@ -119,17 +123,16 @@ export default function HFFeed({ hover, setHover, hoverDraft, channelFilter, set
               </div>
               {items.map(s => {
                 const ch = CHANNELS[s.ch];
-                const dim = hoverDraft && s.draftId !== hoverDraft;
-                const lit = hoverDraft && s.draftId === hoverDraft;
-                const isHov = hover === s.id;
+                const contact = signalContact(s);
+                const dim = hoverContact && contact !== hoverContact;
+                const lit = hoverContact && contact === hoverContact;
                 return (
                   <div
                     key={s.id}
-                    onMouseEnter={() => setHover(s.id)}
-                    onMouseLeave={() => setHover(null)}
+                    onMouseEnter={() => setHoverContact && setHoverContact(contact)}
+                    onMouseLeave={() => setHoverContact && setHoverContact(null)}
                     onClick={() => s.draftId && onDraftClick && onDraftClick(s.draftId)}
                     className={"feed-row ch-rail-" + ch.code + (lit ? " lit" : "") + (dim ? " dim" : "")}
-                    style={{ background: isHov && !lit ? "var(--surface-2)" : undefined }}
                   >
                     <span className={"chc " + ch.code}>{ch.letter}</span>
                     <span className="num" style={{ width: 56, fontSize: 11.5, color: "var(--ink-4)", flexShrink: 0 }}>
