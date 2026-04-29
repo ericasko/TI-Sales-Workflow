@@ -44,7 +44,8 @@ export default function HFFeed({
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header — text sits at natural size; controls wrap underneath when there's no room */}
+      {/* Header — controls locked right via margin-auto; gap shrinks with the column,
+          then they wrap underneath when there's truly no room. */}
       <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 14px" }}>
         <div style={{ flex: "0 1 auto", minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Signals</div>
@@ -52,7 +53,7 @@ export default function HFFeed({
             <span className="num">{signals.length}</span> events from your accounts
           </div>
         </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginLeft: "auto" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--ink-3)" }}>
             <span style={{ width: 6, height: 6, borderRadius: 3, background: "var(--ok)", display: "inline-block" }} />
             live

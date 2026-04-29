@@ -88,7 +88,8 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header — text sits at natural size; buttons wrap underneath when there's no room */}
+      {/* Header — buttons locked right via margin-auto; gap shrinks with the column,
+          then they wrap underneath when there's truly no room. */}
       <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 14px" }}>
         <div style={{ flex: "0 1 auto", minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Action Queue</div>
@@ -98,7 +99,7 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
             {" "}actions · what to do &amp; why
           </div>
         </div>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginLeft: "auto" }}>
           <span className="chip ok"><span className="dot ok" /> {greenIds.length} ready to send</span>
           <button className="btn sm" title="Add a new action manually" onClick={onAddAction}>
             <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
