@@ -93,13 +93,15 @@ npm run build      # production build into dist/
 
 **Commits must use `--no-gpg-sign`.** The Anthropic signing service in this sandbox returns HTTP 400 "missing source" on every request — it's a backend bug, not transient. Don't waste cycles retrying. The user has approved skipping signing for this repo.
 
-**Push uses an inline GitHub PAT.** No GitHub auth is configured in the sandbox (no `gh` CLI, no SSH key, no stored credential). The user provides a fine-scoped PAT (Contents: read+write, single repo) when a push is needed. Use the URL form:
+**Push uses `$GITHUB_TOKEN` from user settings.** The token is persisted in `~/.claude/settings.json` under `env.GITHUB_TOKEN` so it's available across sessions. It's a fine-scoped PAT (Contents: read+write, TI-Sales-Workflow only). Use the URL form:
 
 ```bash
-git push "https://<TOKEN>@github.com/ericasko/TI-Sales-Workflow.git" main:main
+git push "https://x-access-token:$GITHUB_TOKEN@github.com/ericasko/TI-Sales-Workflow.git" main:main
 ```
 
-Never store the token in `git remote set-url` — keep it inline so it doesn't end up in the repo's git config. Always pipe push output through `sed 's/github_pat_[A-Za-z0-9_]*/<TOKEN>/g'` so the token doesn't leak into transcripts.
+Never store the token in `git remote set-url` — keep it inline so it doesn't end up in the repo's git config. Always pipe push output through `sed 's/github_pat_[A-Za-z0-9_]*/<TOKEN>/g'` so the token value doesn't leak into transcripts.
+
+If the token has been revoked or `$GITHUB_TOKEN` is empty, ask the user for a fresh fine-grained PAT and update it via `update-config` (env var `GITHUB_TOKEN` in `~/.claude/settings.json`).
 
 **Commit message convention:** Conventional, imperative mood. End every commit body with the Claude Code session URL: `https://claude.ai/code/session_01StKbM5ur4VLtrZFdEw7BYc`. Don't squash — small focused commits per change.
 
