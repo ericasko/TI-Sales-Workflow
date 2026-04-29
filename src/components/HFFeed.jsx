@@ -44,30 +44,31 @@ export default function HFFeed({
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 10 }}>
-        <div>
+      {/* Header — text gets minimum width; controls wrap underneath if there's no room */}
+      <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 10px" }}>
+        <div style={{ flex: "1 1 240px", minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Signals</div>
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
             <span className="num">{signals.length}</span> events from your accounts
           </div>
         </div>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--ink-3)" }}>
-          <span style={{ width: 6, height: 6, borderRadius: 3, background: "var(--ok)", display: "inline-block" }} />
-          live
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--ink-3)" }}>
+            <span style={{ width: 6, height: 6, borderRadius: 3, background: "var(--ok)", display: "inline-block" }} />
+            live
+          </div>
+          <button className="btn ghost icon sm" title="Refresh">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 8a6 6 0 1 1-1.76-4.24M14 3v3h-3"/>
+            </svg>
+          </button>
+          <button className="btn sm" title="Log a call, meeting, or note" onClick={onAddSignal}>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+              <path d="M7 2v10M2 7h10"/>
+            </svg>
+            Log
+          </button>
         </div>
-        <button className="btn ghost icon sm" title="Refresh">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 8a6 6 0 1 1-1.76-4.24M14 3v3h-3"/>
-          </svg>
-        </button>
-        <button className="btn sm" title="Log a call, meeting, or note" onClick={onAddSignal}>
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-            <path d="M7 2v10M2 7h10"/>
-          </svg>
-          Log
-        </button>
       </div>
 
       {/* Search row */}
