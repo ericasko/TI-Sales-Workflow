@@ -417,6 +417,65 @@ html, body, #root {
   letter-spacing: 0.02em;
 }
 
+/* Toasts */
+.hf-toast-stack {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 80;
+  pointer-events: none;
+}
+.hf-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px 10px 14px;
+  min-width: 220px;
+  max-width: 460px;
+  background: rgba(14, 17, 22, 0.94);
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  font: 500 13px/1.3 "Inter", sans-serif;
+  pointer-events: auto;
+  animation: hfToastIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hf-toast-success { background: #14563f; }
+.hf-toast-reject  { background: #6e2a23; }
+.hf-toast-info    { background: rgba(14, 17, 22, 0.94); }
+@keyframes hfToastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Editable email body */
+.hf .editable-body {
+  outline: none;
+  border-radius: var(--r);
+  transition: box-shadow .12s, background .12s;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+.hf .editable-body:hover { background: var(--surface-2); }
+.hf .editable-body:focus { background: var(--surface-2); box-shadow: 0 0 0 2px rgba(14, 17, 22, 0.08); }
+
+.hf .edited-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: #fff;
+  font: 600 10.5px/1 "Inter", sans-serif;
+  letter-spacing: 0.02em;
+}
+
 /* Search input */
 .hf .search-input {
   width: 100%;

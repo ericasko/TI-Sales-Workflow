@@ -80,6 +80,17 @@ Reusable component classes: `.btn` (+ `.sm`/`.xs`/`.primary`/`.accent`/`.ghost`/
     - **"+ Log"** button in the Signal panel header → opens `LogSignalModal`. Rep records a call / meeting / note (with optional notes/transcript). Logged signal lands in the feed (channel `call`) tagged "Logged by you" (`loggedByUser: true`).
     - **"Take action"** affordance on any feed signal without a draftId → opens `AddActionModal` pre-filled with the signal's contact and a suggested intent.
     - State for rep-created items is lifted to `HFWorkbench` (`extraSignals`, `extraActions`) and prepended to the originals before passing to children.
+12. **Click-to-clear queue actions** — every interactive action button is wired up:
+    - Per-row paper-airplane → sends + dismisses + toast "Sent ✓" (or "Sent — with your edits ✓" if edited). Disabled for human-led actions.
+    - Per-row × → rejects (rep doesn't want to take this action at all) + toast "Action rejected".
+    - Bulk Approve & send / Reject / Defer 2d (toolbar when N selected) all dismiss with appropriate toasts.
+    - "Send all N green" header CTA dismisses every high-confidence row.
+    - Drawer's Approve & Send / Reject / Defer 2d / Save draft buttons dismiss + close + toast.
+    - Empty state when the queue clears: "Inbox zero ✨" replaces the row list.
+    - State: `dismissedIds` Set in `HFWorkbench` filters out dismissed items everywhere they're consumed.
+13. **Editable email body in the drawer** — explicit Edit toggle (not always-on contentEditable, which has cursor-jump issues). Click "Edit" → body becomes a textarea pre-filled with plain text, annotation highlights are hidden during editing. "Done" / "Cancel" buttons. After editing, an "Edited" tag + "Revert" link appear next to the subject; the "Approve & Send" toast becomes "Sent — with your edits ✓". Edits live in `editedBodies` map in `HFWorkbench`, keyed by draftId, so they persist while the rep navigates around.
+14. **Toasts** — bottom-center, slide-in confirmation pills. Kinds: `success` (green), `reject` (red), `info` (gray), `default` (dark). Auto-dismiss after ~3s, click × to dismiss early. Lifted in `HFWorkbench`; `showToast(msg, kind)` is called from anywhere via prop drilling.
+15. **Time-aware greeting** — "Good morning / afternoon / evening, Erica" based on `new Date().getHours()`.
 
 ## Dev workflow
 

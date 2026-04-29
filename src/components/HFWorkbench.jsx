@@ -1,20 +1,67 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { SIGNALS, DRAFTS, ACTIONS } from '../data/index.js';
 import HFFeed from './HFFeed.jsx';
 import HFQueue from './HFQueue.jsx';
 import HFDrawer from './HFDrawer.jsx';
 import AddActionModal from './AddActionModal.jsx';
 import LogSignalModal from './LogSignalModal.jsx';
+import Toasts from './Toasts.jsx';
 
 const PILOT_NUMS = [1, 2, 3];
+
+const greetingPrefix = () => {
+  const h = new Date().getHours();
+  if (h < 5)  return "Up late";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Good night";
+};
 
 export default function HFWorkbench() {
   // Lifted state — rep-created signals and actions are appended to the originals.
   const [extraSignals, setExtraSignals] = useState([]);
   const [extraActions, setExtraActions] = useState([]);
+  // Actions/drafts the rep has dismissed (sent / rejected / deferred). Filtered out everywhere.
+  const [dismissedIds, setDismissedIds] = useState(() => new Set());
+  // Per-draft edited bodies (plain text) — present once the rep has typed in the drawer.
+  const [editedBodies, setEditedBodies] = useState({});
+  // Toasts for confirmation feedback.
+  const [toasts, setToasts] = useState([]);
+
+  const isLive = (a) => !dismissedIds.has(a.id);
   const allSignals = [...extraSignals, ...SIGNALS];
-  const allActions = [...extraActions, ...ACTIONS];
-  const allDrafts  = [...extraActions, ...DRAFTS];
+  const allActions = [...extraActions, ...ACTIONS].filter(isLive);
+  const allDrafts  = [...extraActions, ...DRAFTS].filter(isLive);
+
+  const showToast = useCallback((message, kind = "default", duration) => {
+    const id = "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    setToasts(prev => [...prev, { id, message, kind, duration }]);
+  }, []);
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const dismissActions = useCallback((ids, toast) => {
+    if (!ids || ids.length === 0) return;
+    setDismissedIds(prev => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+    if (toast) showToast(toast.message, toast.kind);
+  }, [showToast]);
+
+  const setEditedBody = useCallback((id, text) => {
+    setEditedBodies(prev => {
+      if (text == null) {
+        const { [id]: _drop, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: text };
+    });
+  }, []);
 
   const [openId, setOpenId] = useState(null);
   // hoverContact = a contact identifier (person name, or company for synth/aggregate
@@ -49,14 +96,17 @@ export default function HFWorkbench() {
 
   const draftIds = allDrafts.map(d => d.id);
 
-  // Keyboard navigation (no-op when a modal is open)
+  // Keyboard navigation (no-op when a modal is open or focus is in an editable field)
   useEffect(() => {
     const onKey = e => {
       if (addOpen || logOpen) return;
+      const ae = document.activeElement;
+      const inEditable = ae && (ae.isContentEditable || ae.tagName === "INPUT" || ae.tagName === "TEXTAREA");
       if (e.key === "Escape" && openId) {
         setOpenId(null);
         return;
       }
+      if (inEditable) return;
       if (openId) {
         const idx = draftIds.indexOf(openId);
         if (e.key === "ArrowUp" || e.key === "k") {
@@ -84,6 +134,7 @@ export default function HFWorkbench() {
     setAddPrefill(null);
     // Open the new action in the drawer for review
     setOpenId(action.id);
+    showToast("Draft generated — review and send", "success");
   };
 
   const handleLogSignal = (signal) => {
@@ -201,14 +252,20 @@ export default function HFWorkbench() {
       {/* Sub-header */}
       <div style={{ padding: "16px 28px 14px", background: "var(--bg)", display: "flex", alignItems: "baseline", gap: 14, flexShrink: 0 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>Good morning, Erica</div>
+          <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>{greetingPrefix()}, Erica</div>
           <div style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 3 }}>
-            <span className="num">{allSignals.length}</span> signals fired since yesterday → produced{" "}
-            <span className="num">{allDrafts.length}</span> drafts ·{" "}
-            <span style={{ color: "var(--ok)" }}>
-              <span className="num">{allDrafts.filter(d => d.conf === "ok").length}</span> ready to send
-            </span>{" "}
-            · est. 14 min to clear
+            {allDrafts.length === 0 ? (
+              <>Inbox zero — all caught up <span style={{ color: "var(--ok)" }}>✨</span></>
+            ) : (
+              <>
+                <span className="num">{allSignals.length}</span> signals fired since yesterday → produced{" "}
+                <span className="num">{allDrafts.length}</span> drafts ·{" "}
+                <span style={{ color: "var(--ok)" }}>
+                  <span className="num">{allDrafts.filter(d => d.conf === "ok").length}</span> ready to send
+                </span>{" "}
+                · est. 14 min to clear
+              </>
+            )}
           </div>
         </div>
         <div style={{ flex: 1 }} />
@@ -240,6 +297,8 @@ export default function HFWorkbench() {
           hoverContact={hoverContact}
           setHoverContact={setHoverContact}
           onAddAction={() => { setAddPrefill(null); setAddOpen(true); }}
+          dismissActions={dismissActions}
+          editedBodies={editedBodies}
         />
       </div>
 
@@ -250,6 +309,9 @@ export default function HFWorkbench() {
           drafts={allDrafts}
           onClose={handleDrawerNav}
           allIds={draftIds}
+          editedBody={editedBodies[openId]}
+          setEditedBody={setEditedBody}
+          dismissActions={dismissActions}
         />
       )}
 
@@ -262,8 +324,10 @@ export default function HFWorkbench() {
       <LogSignalModal
         open={logOpen}
         onClose={() => setLogOpen(false)}
-        onSubmit={handleLogSignal}
+        onSubmit={(s) => { handleLogSignal(s); showToast("Signal logged ✓", "success"); }}
       />
+
+      <Toasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CHANNELS, THREADS } from '../data/index.js';
 
 const ANNOS = {
@@ -18,6 +18,35 @@ const ANNOS = {
     { id: "a2", num: 2, kind: "ok", text: "RGE QFN package",   note: "Matches part number on quote",          source: "Quote line item" },
   ],
 };
+
+// Plain-text version of each body template, used when the rep enters edit mode
+function buildPlainBody(d) {
+  if (d.createdByUser && d.body) return d.body;
+  if (d.id === "d2") return `Hi Priya,
+
+Hope the MSP430G2553 LaunchPad arrived OK. I noticed you also pulled SLAA660 twice this month, which usually means a team is working through low-power optimization on a battery design.
+
+For the RGZ variant you're sampling, the most common gotcha is bypass cap placement under the exposed pad — happy to send the layout guide we use internally.
+
+Given the parts you've been looking at, my guess is you're putting together a battery-powered industrial sensor. Let me know if a 20-minute call would be useful.
+
+— Erica`;
+  if (d.id === "d3") return `Hello,
+
+I noticed three engineers on your team have been looking at our buck family — specifically TPS6521905 + LMR33630 — which usually shows up around the time a team is locking down a power tree.
+
+If your next platform is the right context, I'd love to spend 30 minutes with whoever owns power-stage decisions. We have ref designs covering both single-rail and split-rail topologies for this part pairing.
+
+— Erica`;
+  const firstName = d.rec.name.split(" ")[0];
+  return `Hi ${firstName},
+
+Saw your TPS6521905 quote come through yesterday. Wanted to flag that the RGE QFN package has a few layout requirements worth knowing about up front — most questions we get from new users center on inductor placement and the FB divider trace.
+
+Happy to walk through it. Also pinging you the PMP40123 reference design which uses this part in the configuration teams usually start from.
+
+— Erica`;
+}
 
 function buildBody(d, active, setActive) {
   // Rep-created drafts render the user-typed body verbatim — no fake annotations
@@ -69,10 +98,53 @@ function Anno({ id, kind, active, setActive, children }) {
   );
 }
 
-export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
+export default function HFDrawer({ draftId, drafts, onClose, allIds, editedBody, setEditedBody, dismissActions }) {
   const d = drafts.find(x => x.id === draftId);
   const [active, setActive] = useState(null);
   const [tab, setTab] = useState("activity");
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftText, setDraftText] = useState("");
+  const textareaRef = useRef(null);
+
+  const startEditing = () => {
+    if (!d) return;
+    setDraftText(editedBody != null ? editedBody : buildPlainBody(d));
+    setIsEditing(true);
+    setTimeout(() => textareaRef.current && textareaRef.current.focus(), 50);
+  };
+
+  const finishEditing = () => {
+    if (!d) return;
+    const trimmed = draftText.trim();
+    const original = buildPlainBody(d).trim();
+    setEditedBody(draftId, trimmed === original ? null : draftText);
+    setIsEditing(false);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const revertEdits = () => {
+    setEditedBody(draftId, null);
+  };
+
+  const approveAndSend = () => {
+    const msg = editedBody ? "Sent — with your edits ✓" : "Sent ✓";
+    dismissActions([draftId], { message: msg, kind: "success" });
+    onClose();
+  };
+  const reject = () => {
+    dismissActions([draftId], { message: "Action rejected", kind: "reject" });
+    onClose();
+  };
+  const defer = () => {
+    dismissActions([draftId], { message: "Deferred 2 days", kind: "info" });
+    onClose();
+  };
+  const saveAsDraft = () => {
+    onClose();
+  };
 
   useEffect(() => {
     const onKey = e => {
@@ -85,6 +157,7 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
   useEffect(() => {
     setActive(null);
     setTab("activity");
+    setIsEditing(false);
   }, [draftId]);
 
   if (!d) return null;
@@ -183,13 +256,68 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
               </div>
 
               <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-lg)", overflow: "hidden", background: "var(--surface)" }}>
-                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)" }}>
-                  <div className="micro" style={{ marginBottom: 3 }}>Subject</div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600 }}>{d.subject}</div>
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)", display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="micro" style={{ marginBottom: 3 }}>Subject</div>
+                    <div style={{ fontSize: 14.5, fontWeight: 600 }}>{d.subject}</div>
+                  </div>
+                  {editedBody != null && !isEditing && (
+                    <>
+                      <span className="edited-tag">
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 10l1.5-3.5L9 1.5l1.5 1.5L5 8.5L2 10z"/>
+                        </svg>
+                        Edited
+                      </span>
+                      <button
+                        className="btn xs ghost"
+                        onClick={revertEdits}
+                        title="Discard edits and restore the AI version"
+                      >
+                        Revert
+                      </button>
+                    </>
+                  )}
+                  {!isEditing ? (
+                    <button className="btn xs" onClick={startEditing} title="Edit the email body">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 10l1.5-3.5L9 1.5l1.5 1.5L5 8.5L2 10z"/>
+                      </svg>
+                      Edit
+                    </button>
+                  ) : (
+                    <>
+                      <button className="btn xs ghost" onClick={cancelEditing}>Cancel</button>
+                      <button className="btn xs primary" onClick={finishEditing}>Done</button>
+                    </>
+                  )}
                 </div>
-                <div style={{ padding: "16px 18px", fontSize: 13.5, lineHeight: 1.65, color: "var(--ink-2)" }}>
-                  {buildBody(d, active, setActive)}
-                </div>
+
+                {isEditing ? (
+                  <textarea
+                    ref={textareaRef}
+                    value={draftText}
+                    onChange={(e) => setDraftText(e.target.value)}
+                    spellCheck
+                    style={{
+                      width: "100%",
+                      minHeight: 240,
+                      padding: "16px 18px",
+                      border: "none",
+                      outline: "none",
+                      resize: "vertical",
+                      background: "var(--surface)",
+                      color: "var(--ink-2)",
+                      font: "400 13.5px/1.65 Inter, sans-serif",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  />
+                ) : (
+                  <div style={{ padding: "16px 18px", fontSize: 13.5, lineHeight: 1.65, color: "var(--ink-2)", whiteSpace: editedBody != null ? "pre-wrap" : "normal" }}>
+                    {editedBody != null ? editedBody : buildBody(d, active, setActive)}
+                  </div>
+                )}
+
                 <div style={{ padding: "10px 16px", borderTop: "1px solid var(--line)", display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", background: "var(--surface-2)" }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 6L6.5 10.5a2.5 2.5 0 0 1-3.5-3.5L8 2a1.7 1.7 0 0 1 2.4 2.4L5 9.5"/>
@@ -208,8 +336,12 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
                 <span style={{ color: "var(--ink-2)", fontWeight: 500 }}>{d.model}</span>
                 <span>·</span>
                 <span>2 min ago</span>
-                <span>·</span>
-                <button className="btn xs ghost">regenerate</button>
+                {editedBody != null && (
+                  <>
+                    <span>·</span>
+                    <span style={{ color: "var(--ink-2)" }}>edited by you</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -424,16 +556,16 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
 
         {/* Action bar */}
         <div style={{ padding: "12px 22px", borderTop: "1px solid var(--line)", background: "var(--surface-2)", display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-          <button className="btn accent">
+          <button className="btn accent" onClick={approveAndSend}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 6l4 4L11 2"/>
             </svg>
             Approve &amp; Send
             <span className="kbd" style={{ marginLeft: 4, background: "rgba(255,255,255,0.18)", borderColor: "rgba(255,255,255,0.3)", color: "#fff" }}>e</span>
           </button>
-          <button className="btn">Save draft</button>
-          <button className="btn">Reject</button>
-          <button className="btn ghost">Defer 2d</button>
+          <button className="btn" onClick={saveAsDraft}>Save draft</button>
+          <button className="btn" onClick={reject}>Reject</button>
+          <button className="btn ghost" onClick={defer}>Defer 2d</button>
           <div style={{ flex: 1 }} />
           <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>
             <span className="kbd">Esc</span> close · <span className="kbd">↑</span><span className="kbd">↓</span> next/prev

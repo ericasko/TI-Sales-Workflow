@@ -7,7 +7,7 @@ const CONF_RANK = { ok: 0, warn: 1, bad: 2 };
 // company name (since there's no single recipient).
 const draftContact = (d) => (d.ch === "synth" ? d.rec.company : d.rec.name);
 
-export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact, setHoverContact, onAddAction }) {
+export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact, setHoverContact, onAddAction, dismissActions, editedBodies }) {
   const [selected, setSelected] = useState({ d1: true, d3: true, d6: true, d8: true });
   const [sort, setSort] = useState("urgency");
   const [digestOpen, setDigestOpen] = useState(false);
@@ -15,9 +15,46 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef(null);
 
+  // Drop selections for rows that no longer exist in the queue (after dismissals)
+  useEffect(() => {
+    setSelected(prev => {
+      const liveIds = new Set(actions.map(a => a.id));
+      const next = {};
+      for (const [k, v] of Object.entries(prev)) if (v && liveIds.has(k)) next[k] = v;
+      return next;
+    });
+  }, [actions]);
+
   const toggle = (id) => setSelected(s => ({ ...s, [id]: !s[id] }));
   const greenIds = drafts.filter(d => d.conf === "ok").map(d => d.id);
   const selCount = Object.values(selected).filter(Boolean).length;
+  const selectedIds = Object.entries(selected).filter(([, v]) => v).map(([k]) => k);
+
+  const sendOne = (id, e) => {
+    e?.stopPropagation();
+    const edited = editedBodies && editedBodies[id];
+    dismissActions([id], { message: edited ? "Sent — with your edits ✓" : "Sent ✓", kind: "success" });
+  };
+  const rejectOne = (id, e) => {
+    e?.stopPropagation();
+    dismissActions([id], { message: "Action rejected", kind: "reject" });
+  };
+  const sendBulk = () => {
+    if (selectedIds.length === 0) return;
+    dismissActions(selectedIds, { message: `${selectedIds.length} ${selectedIds.length === 1 ? "action" : "actions"} sent ✓`, kind: "success" });
+  };
+  const rejectBulk = () => {
+    if (selectedIds.length === 0) return;
+    dismissActions(selectedIds, { message: `${selectedIds.length} rejected`, kind: "reject" });
+  };
+  const deferBulk = () => {
+    if (selectedIds.length === 0) return;
+    dismissActions(selectedIds, { message: `${selectedIds.length} deferred 2 days`, kind: "info" });
+  };
+  const sendAllGreen = () => {
+    if (greenIds.length === 0) return;
+    dismissActions(greenIds, { message: `${greenIds.length} green ${greenIds.length === 1 ? "action" : "actions"} sent ✓`, kind: "success" });
+  };
 
   const accountOptions = useMemo(() => {
     const set = new Set(actions.map(a => a.rec.company));
@@ -68,7 +105,12 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
           </svg>
           Add action
         </button>
-        <button className="btn accent sm">
+        <button
+          className="btn accent sm"
+          disabled={greenIds.length === 0}
+          onClick={sendAllGreen}
+          style={greenIds.length === 0 ? { opacity: .45, cursor: "not-allowed" } : {}}
+        >
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M1 6l4 4L11 2"/>
           </svg>
@@ -89,9 +131,9 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
         </span>
         {selCount > 0 && (
           <>
-            <button className="btn xs primary">Approve &amp; send</button>
-            <button className="btn xs">Reject</button>
-            <button className="btn xs ghost">Defer 2d</button>
+            <button className="btn xs primary" onClick={sendBulk}>Approve &amp; send</button>
+            <button className="btn xs" onClick={rejectBulk}>Reject</button>
+            <button className="btn xs ghost" onClick={deferBulk}>Defer 2d</button>
           </>
         )}
         <div style={{ flex: 1 }} />
@@ -229,8 +271,16 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
       {/* Rows */}
       <div style={{ flex: 1, overflow: "auto" }}>
         {visibleActions.length === 0 && (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
-            No actions match this filter.
+          <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
+            {actions.length === 0 ? (
+              <>
+                <div style={{ fontSize: 24, marginBottom: 6 }}>✨</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-2)" }}>Inbox zero</div>
+                <div style={{ marginTop: 4, color: "var(--ink-4)" }}>Nothing waiting on you. New signals will land here.</div>
+              </>
+            ) : (
+              <>No actions match this filter.</>
+            )}
           </div>
         )}
         {visibleActions.map(d => {
@@ -305,15 +355,25 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
 
               {/* Actions */}
               <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }} onClick={e => e.stopPropagation()}>
-                <button className="btn xs primary" title="Approve & send (e)">
+                <button
+                  className="btn xs primary"
+                  title="Approve & send"
+                  onClick={(e) => sendOne(d.id, e)}
+                  disabled={d.actionType === "human"}
+                  style={d.actionType === "human" ? { opacity: .35, cursor: "not-allowed" } : {}}
+                >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 1L5 7"/>
                     <path d="M11 1L7 11L5 7L1 5L11 1Z"/>
                   </svg>
                 </button>
-                <button className="btn xs ghost icon" title="More">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                    <circle cx="3" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="11" cy="7" r="1.2"/>
+                <button
+                  className="btn xs ghost icon"
+                  title="Reject (don't take this action)"
+                  onClick={(e) => rejectOne(d.id, e)}
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M11 3L3 11M3 3l8 8"/>
                   </svg>
                 </button>
               </div>
