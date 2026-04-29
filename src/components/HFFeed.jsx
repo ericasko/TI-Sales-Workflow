@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { CHANNELS, SIGNALS, SYNTH_INSIGHTS } from '../data/index.js';
 
 const GROUPS = [
@@ -10,9 +11,29 @@ const GROUPS = [
 // except for synth/aggregate signals where there's no individual — use company.
 const signalContact = (s) => (s.ch === "synth" ? s.co : s.who);
 
+const matchesSearch = (s, q) => {
+  if (!q) return true;
+  const t = q.toLowerCase();
+  return s.who.toLowerCase().includes(t) || s.co.toLowerCase().includes(t);
+};
+
+const matchesPin = (s, pin) => {
+  if (!pin) return true;
+  return s.who === pin || s.co === pin;
+};
+
 export default function HFFeed({ hoverContact, setHoverContact, channelFilter, setChannelFilter, onDraftClick }) {
-  const filtered = (items) =>
-    channelFilter === "all" ? items : items.filter(s => s.ch === channelFilter);
+  const [search, setSearch] = useState("");
+  const [pinned, setPinned] = useState(null);
+
+  const togglePin = (contact) => setPinned(p => (p === contact ? null : contact));
+
+  const filtered = (items) => {
+    let arr = channelFilter === "all" ? items : items.filter(s => s.ch === channelFilter);
+    if (search) arr = arr.filter(s => matchesSearch(s, search));
+    if (pinned) arr = arr.filter(s => matchesPin(s, pinned));
+    return arr;
+  };
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -34,6 +55,48 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
             <path d="M14 8a6 6 0 1 1-1.76-4.24M14 3v3h-3"/>
           </svg>
         </button>
+      </div>
+
+      {/* Search row */}
+      <div style={{ padding: "10px 20px", borderBottom: "1px solid var(--line)", display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <svg
+            width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="var(--ink-4)" strokeWidth="1.6" strokeLinecap="round"
+            style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+          >
+            <circle cx="6" cy="6" r="4"/><path d="M9.2 9.2L12 12"/>
+          </svg>
+          <input
+            className="search-input"
+            type="text"
+            placeholder="Search by contact or account…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <span
+              onClick={() => setSearch("")}
+              style={{
+                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                cursor: "pointer", color: "var(--ink-4)", fontSize: 14, lineHeight: 1, padding: "2px 4px",
+              }}
+              title="Clear"
+            >×</span>
+          )}
+        </div>
+        {pinned && (
+          <span
+            className="chip"
+            style={{ background: "var(--ink)", color: "#fff", borderColor: "var(--ink)", height: 26, padding: "0 6px 0 10px" }}
+          >
+            <span style={{ fontSize: 11.5 }}>Pinned: <b style={{ fontWeight: 600 }}>{pinned}</b></span>
+            <span
+              onClick={() => setPinned(null)}
+              style={{ cursor: "pointer", marginLeft: 4, padding: "0 4px", lineHeight: 1, fontSize: 14 }}
+              title="Unpin"
+            >×</span>
+          </span>
+        )}
       </div>
 
       {/* Channel filter row */}
@@ -110,6 +173,11 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
 
       {/* Rolling stream */}
       <div style={{ flex: 1, overflow: "auto" }}>
+        {GROUPS.every(g => filtered(g.items).length === 0) && (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
+            No signals match {search ? `"${search}"` : pinned ? `Pinned: ${pinned}` : "this filter"}.
+          </div>
+        )}
         {GROUPS.map((g, gi) => {
           const items = filtered(g.items);
           if (!items.length) return null;
@@ -138,20 +206,34 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
                     <span className="num" style={{ width: 56, fontSize: 11.5, color: "var(--ink-4)", flexShrink: 0 }}>
                       {s.time}
                     </span>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}>{s.who}</span>
-                    <span style={{ fontSize: 12, color: "var(--ink-4)", flexShrink: 0 }}>{s.co}</span>
+                    <span
+                      className="who-link"
+                      style={{ fontSize: 12.5, fontWeight: 600, flexShrink: 0 }}
+                      onClick={(e) => { e.stopPropagation(); togglePin(s.who); }}
+                      title={pinned === s.who ? "Click to unpin" : "Click to pin filter to " + s.who}
+                    >
+                      {s.who}
+                    </span>
+                    <span
+                      className="who-link"
+                      style={{ fontSize: 12, color: "var(--ink-4)", flexShrink: 0 }}
+                      onClick={(e) => { e.stopPropagation(); togglePin(s.co); }}
+                      title={pinned === s.co ? "Click to unpin" : "Click to pin filter to " + s.co}
+                    >
+                      {s.co}
+                    </span>
                     <span style={{ fontSize: 12.5, color: "var(--ink-2)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {s.text}
                     </span>
-                    {s.draftId ? (
-                      <span style={{ fontSize: 11, color: "var(--ink-4)", display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    {s.draftId && (
+                      <span
+                        title="Connected to a draft in the queue"
+                        style={{ color: "var(--ink-5)", display: "inline-flex", alignItems: "center", flexShrink: 0 }}
+                      >
                         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
                           <path d="M2 5.5h7M6 2l3.5 3.5L6 9"/>
                         </svg>
-                        <span className="mono" style={{ fontSize: 10.5 }}>{s.draftId}</span>
                       </span>
-                    ) : (
-                      <span style={{ fontSize: 11, color: "var(--ink-5)", flexShrink: 0 }}>—</span>
                     )}
                   </div>
                 );
