@@ -294,8 +294,9 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
               {/* Actions */}
               <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }} onClick={e => e.stopPropagation()}>
                 <button className="btn xs primary" title="Approve & send (e)">
-                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 6l4 4L11 2"/>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 1L5 7"/>
+                    <path d="M11 1L7 11L5 7L1 5L11 1Z"/>
                   </svg>
                 </button>
                 <button className="btn xs ghost icon" title="More">
