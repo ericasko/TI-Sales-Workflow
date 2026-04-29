@@ -72,6 +72,29 @@ export default function HFWorkbench() {
   const [pilotsOpen, setPilotsOpen] = useState(false);
   const pilotsRef = useRef(null);
 
+  // Theme — persisted across reloads via localStorage.
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ti-theme");
+      return saved === "dark" ? "dark" : "light";
+    } catch { return "light"; }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("ti-theme", theme); } catch {}
+  }, [theme]);
+
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef(null);
+  useEffect(() => {
+    if (!accountOpen) return;
+    const onDown = (e) => {
+      if (accountRef.current && !accountRef.current.contains(e.target)) setAccountOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [accountOpen]);
+
   // Modals
   const [addOpen, setAddOpen] = useState(false);
   const [addPrefill, setAddPrefill] = useState(null);
@@ -246,7 +269,102 @@ export default function HFWorkbench() {
             <path d="M3 6a4 4 0 0 1 8 0v3l1 2H2l1-2V6zM5 12a2 2 0 0 0 4 0"/>
           </svg>
         </button>
-        <div className="av sm" style={{ marginLeft: 4 }}>ES</div>
+        <div ref={accountRef} style={{ position: "relative", marginLeft: 4 }}>
+          <button
+            type="button"
+            className="av sm"
+            onClick={() => setAccountOpen(o => !o)}
+            title="Account & settings"
+            style={{ border: "none", padding: 0, cursor: "pointer", boxShadow: accountOpen ? "0 0 0 2px var(--accent)" : "none", transition: "box-shadow .12s" }}
+          >
+            ES
+          </button>
+          {accountOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                right: 0,
+                minWidth: 240,
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r)",
+                boxShadow: "var(--shadow-lg)",
+                padding: 4,
+                zIndex: 25,
+              }}
+            >
+              <div style={{ padding: "10px 12px 8px", display: "flex", alignItems: "center", gap: 9 }}>
+                <div className="av sm">ES</div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>Erica Skoglund</div>
+                  <div style={{ fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    erica.skoglund@ti.com
+                  </div>
+                </div>
+              </div>
+              <div style={{ height: 1, background: "var(--line)", margin: "4px 0" }} />
+              <div className="micro" style={{ padding: "8px 12px 4px" }}>Theme</div>
+              <div style={{ display: "flex", gap: 4, padding: "0 4px 4px" }}>
+                <button
+                  className={"btn xs " + (theme === "light" ? "" : "ghost")}
+                  onClick={() => setTheme("light")}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="7" cy="7" r="2.5"/>
+                    <path d="M7 1v1.5M7 11.5V13M1 7h1.5M11.5 7H13M2.6 2.6l1.05 1.05M10.35 10.35l1.05 1.05M2.6 11.4l1.05-1.05M10.35 3.65l1.05-1.05"/>
+                  </svg>
+                  Light
+                </button>
+                <button
+                  className={"btn xs " + (theme === "dark" ? "" : "ghost")}
+                  onClick={() => setTheme("dark")}
+                  style={{ flex: 1, justifyContent: "center" }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11.5 8.2A4.5 4.5 0 0 1 5.8 2.5 4.8 4.8 0 1 0 11.5 8.2z"/>
+                  </svg>
+                  Dark
+                </button>
+              </div>
+              <div style={{ height: 1, background: "var(--line)", margin: "4px 0" }} />
+              <button
+                className="btn xs ghost"
+                onClick={() => setAccountOpen(false)}
+                style={{ display: "flex", width: "100%", justifyContent: "flex-start", padding: "7px 12px", color: "var(--ink-3)", cursor: "default" }}
+                disabled
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M9 2L12 5L4 13H1V10L9 2z"/>
+                </svg>
+                My profile <span style={{ marginLeft: "auto", color: "var(--ink-5)", fontSize: 10.5 }}>soon</span>
+              </button>
+              <button
+                className="btn xs ghost"
+                onClick={() => setAccountOpen(false)}
+                style={{ display: "flex", width: "100%", justifyContent: "flex-start", padding: "7px 12px", color: "var(--ink-3)", cursor: "default" }}
+                disabled
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M5 2h4l1 2h2v8H2V4h2l1-2zM5 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"/>
+                </svg>
+                Preferences <span style={{ marginLeft: "auto", color: "var(--ink-5)", fontSize: 10.5 }}>soon</span>
+              </button>
+              <button
+                className="btn xs ghost"
+                onClick={() => setAccountOpen(false)}
+                style={{ display: "flex", width: "100%", justifyContent: "flex-start", padding: "7px 12px", color: "var(--ink-3)", cursor: "default" }}
+                disabled
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <path d="M5 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2M9 4l3 3-3 3M5 7h7"/>
+                </svg>
+                Sign out <span style={{ marginLeft: "auto", color: "var(--ink-5)", fontSize: 10.5 }}>soon</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sub-header */}

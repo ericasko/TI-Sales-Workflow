@@ -164,7 +164,7 @@ export default function HFFeed({
                 onMouseEnter={() => setHoverContact && setHoverContact(ins.co)}
                 onMouseLeave={() => setHoverContact && setHoverContact(null)}
                 style={{
-                  background: isHovered ? "#fff8df" : "var(--surface)",
+                  background: isHovered ? "var(--lit-bg)" : "var(--surface)",
                   border: "1px solid " + (isHovered ? "var(--warn)" : "var(--line)"),
                   borderRadius: "var(--r)",
                   padding: "10px 12px",

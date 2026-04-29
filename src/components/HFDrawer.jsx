@@ -174,7 +174,7 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds, editedBody,
       {/* Backdrop (subtle) */}
       <div
         onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 29, background: "rgba(14,17,22,0.12)" }}
+        style={{ position: "fixed", inset: 0, zIndex: 29, background: "var(--backdrop)" }}
       />
 
       {/* Drawer panel */}
@@ -358,7 +358,7 @@ export default function HFDrawer({ draftId, drafts, onClose, allIds, editedBody,
                     border: "1px solid " + (a.kind === "flag" ? "var(--bad)" : "var(--line)"),
                     borderRadius: "var(--r)",
                     background: active === a.id
-                      ? (a.kind === "flag" ? "var(--bad-bg)" : "#fff8df")
+                      ? (a.kind === "flag" ? "var(--bad-bg)" : "var(--lit-bg)")
                       : (a.kind === "flag" ? "var(--bad-bg)" : "var(--surface)"),
                     transition: "background .12s",
                     cursor: "pointer",
