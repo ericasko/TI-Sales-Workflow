@@ -1,6 +1,7 @@
 export const CHANNELS = {
   quote:  { code: "q", letter: "Q", name: "Quotes",   color: "#b6433d", bg: "#fdecec" },
   order:  { code: "o", letter: "O", name: "Orders",   color: "#2d7a52", bg: "#e7f4ee" },
+  email:  { code: "m", letter: "@", name: "Email",    color: "#0c7691", bg: "#dff0f3" },
   web:    { code: "w", letter: "T", name: "TI.com",   color: "#4a6cb3", bg: "#e8eef8" },
   e2e:    { code: "e", letter: "E", name: "E2E",      color: "#8a4a9a", bg: "#f1e8f4" },
   synth:  { code: "s", letter: "↯", name: "Synth",    color: "#b97509", bg: "#fcf2e0" },
@@ -34,11 +35,14 @@ export const ACTIONS = DRAFTS.map((d, i) => ({
 }));
 
 export const SIGNALS = [
+  { id: "s15", time: "9:55a",    ch: "email", who: "Priya Ramaswamy", co: "Northfield Sense",   text: "Replied — asking about RGZ variant pinout + bypass cap layout", draftId: "d2", weight: "strong" },
   { id: "s1",  time: "9:42a",    ch: "quote", who: "Marcus Kim",      co: "Volthaus Battery",   text: "Submitted quote — TPS6521905 (5kpc, RGE QFN)",              draftId: "d1", weight: "strong" },
   { id: "s2",  time: "9:31a",    ch: "web",   who: "Theo Falk",       co: "LumenStack",         text: "First-time TPS6521905 datasheet view",                      draftId: "d9", weight: "med"    },
   { id: "s3",  time: "9:18a",    ch: "web",   who: "Priya Ramaswamy", co: "Northfield Sense",   text: "Downloaded SLAA660 (low-power app note · 2nd time)",        draftId: "d2", weight: "med"    },
+  { id: "s16", time: "9:08a",    ch: "email", who: "Marcus Kim",      co: "Volthaus Battery",   text: "Replied: \"Thanks — got the datasheet, will review.\"",     draftId: null, weight: "weak"   },
   { id: "s4",  time: "8:55a",    ch: "synth", who: "3 engineers",     co: "Acme Robotics",      text: "Pattern: convergence on buck regulators (30d)",             draftId: "d3", weight: "strong" },
   { id: "s5",  time: "8:40a",    ch: "web",   who: "Jen Tobias",      co: "Helio Charge",       text: "BQ25895 datasheet · 3rd view this week",                    draftId: "d4", weight: "med"    },
+  { id: "s17", time: "yest 5p",  ch: "email", who: "Jen Tobias",      co: "Helio Charge",       text: "Replied: \"Can we set up a 30-min call next Tue on BQ25895?\"", draftId: "d4", weight: "strong" },
   { id: "s6",  time: "yest 6p",  ch: "order", who: "Sofia Halberg",   co: "Drift EV",           text: "Ordered TMS320F28379D EVM",                                 draftId: "d8", weight: "strong" },
   { id: "s7",  time: "yest 4p",  ch: "order", who: "Raj Singh",       co: "SensorGrid",         text: "Ordered INA226 samples (10pc)",                             draftId: "d5", weight: "strong" },
   { id: "s8",  time: "yest 3p",  ch: "web",   who: "Lena Duarte",     co: "Meridian MotorCtrl", text: "Downloaded SPRUH18 (InstaSPIN tuning)",                     draftId: "d6", weight: "med"    },

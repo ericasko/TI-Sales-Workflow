@@ -1,14 +1,49 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { CHANNELS, DRAFTS, ACTIONS, ACTION_TYPES } from '../data/index.js';
+
+const CONF_RANK = { ok: 0, warn: 1, bad: 2 };
 
 export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraft }) {
   const [selected, setSelected] = useState({ d1: true, d3: true, d6: true, d8: true });
   const [sort, setSort] = useState("urgency");
   const [digestOpen, setDigestOpen] = useState(false);
+  const [accountFilter, setAccountFilter] = useState("all");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef(null);
 
   const toggle = (id) => setSelected(s => ({ ...s, [id]: !s[id] }));
   const greenIds = DRAFTS.filter(d => d.conf === "ok").map(d => d.id);
   const selCount = Object.values(selected).filter(Boolean).length;
+
+  const accountOptions = useMemo(() => {
+    const set = new Set(ACTIONS.map(a => a.rec.company));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, []);
+
+  const visibleActions = useMemo(() => {
+    let arr = accountFilter === "all"
+      ? [...ACTIONS]
+      : ACTIONS.filter(a => a.rec.company === accountFilter);
+
+    if (sort === "confidence") {
+      arr.sort((a, b) => {
+        if (a.actionType === "human" && b.actionType !== "human") return 1;
+        if (b.actionType === "human" && a.actionType !== "human") return -1;
+        return (CONF_RANK[a.conf] ?? 99) - (CONF_RANK[b.conf] ?? 99);
+      });
+    }
+    // urgency: keep curated source order
+    return arr;
+  }, [sort, accountFilter]);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const onDown = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [filterOpen]);
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -17,7 +52,9 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Action Queue</div>
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
-            <span className="num">{ACTIONS.length}</span> actions · what to do &amp; why
+            <span className="num">{visibleActions.length}</span>
+            {visibleActions.length !== ACTIONS.length && <> of <span className="num">{ACTIONS.length}</span></>}
+            {" "}actions · what to do &amp; why
           </div>
         </div>
         <span className="chip ok"><span className="dot ok" /> {greenIds.length} ready to send</span>
@@ -49,16 +86,84 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
         )}
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: 11, color: "var(--ink-4)" }}>Sort:</span>
-        {["urgency", "confidence", "account"].map(k => (
+        {["urgency", "confidence"].map(k => (
           <button key={k} onClick={() => setSort(k)} className={"btn xs " + (sort === k ? "" : "ghost")}>{k}</button>
         ))}
         <span style={{ width: 1, height: 16, background: "var(--line)" }} />
-        <button className="btn xs ghost">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-            <path d="M1 3h10M3 6h6M5 9h2"/>
-          </svg>
-          Filter
-        </button>
+        <div ref={filterRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setFilterOpen(o => !o)}
+            className={"btn xs " + (accountFilter !== "all" ? "" : "ghost")}
+            style={accountFilter !== "all" ? { borderColor: "var(--ink)", color: "var(--ink)" } : {}}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+              <path d="M1 3h10M3 6h6M5 9h2"/>
+            </svg>
+            {accountFilter === "all" ? "Filter" : `Account: ${accountFilter}`}
+            {accountFilter !== "all" && (
+              <span
+                onClick={(e) => { e.stopPropagation(); setAccountFilter("all"); }}
+                style={{ marginLeft: 2, color: "var(--ink-4)", padding: "0 2px", fontSize: 12, lineHeight: 1, cursor: "pointer" }}
+              >×</span>
+            )}
+          </button>
+          {filterOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 4px)",
+                right: 0,
+                minWidth: 220,
+                maxHeight: 320,
+                overflow: "auto",
+                background: "var(--surface)",
+                border: "1px solid var(--line)",
+                borderRadius: "var(--r)",
+                boxShadow: "var(--shadow-lg)",
+                padding: 4,
+                zIndex: 10,
+              }}
+            >
+              <div className="micro" style={{ padding: "8px 10px 6px" }}>Filter by account</div>
+              <button
+                onClick={() => { setAccountFilter("all"); setFilterOpen(false); }}
+                className="btn xs ghost"
+                style={{
+                  display: "flex",
+                  width: "100%",
+                  justifyContent: "flex-start",
+                  fontWeight: accountFilter === "all" ? 600 : 400,
+                  background: accountFilter === "all" ? "var(--surface-3)" : "transparent",
+                }}
+              >
+                All accounts
+                <span style={{ marginLeft: "auto", color: "var(--ink-4)" }} className="num">{ACTIONS.length}</span>
+              </button>
+              <div style={{ height: 1, background: "var(--line)", margin: "4px 0" }} />
+              {accountOptions.map(co => {
+                const n = ACTIONS.filter(a => a.rec.company === co).length;
+                const active = accountFilter === co;
+                return (
+                  <button
+                    key={co}
+                    onClick={() => { setAccountFilter(co); setFilterOpen(false); }}
+                    className="btn xs ghost"
+                    style={{
+                      display: "flex",
+                      width: "100%",
+                      justifyContent: "flex-start",
+                      fontWeight: active ? 600 : 400,
+                      background: active ? "var(--surface-3)" : "transparent",
+                    }}
+                  >
+                    {co}
+                    <span style={{ marginLeft: "auto", color: "var(--ink-4)" }} className="num">{n}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Auto-sent digest */}
@@ -113,7 +218,12 @@ export default function HFQueue({ onOpen, openId, hoverSignalDraft, setHoverDraf
 
       {/* Rows */}
       <div style={{ flex: 1, overflow: "auto" }}>
-        {ACTIONS.map(d => {
+        {visibleActions.length === 0 && (
+          <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
+            No actions match this filter.
+          </div>
+        )}
+        {visibleActions.map(d => {
           const ch = CHANNELS[d.ch];
           const dim = hoverSignalDraft && hoverSignalDraft !== d.id;
           const lit = hoverSignalDraft && hoverSignalDraft === d.id;

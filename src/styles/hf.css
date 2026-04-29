@@ -38,6 +38,7 @@ html, body, #root {
 
   --ch-quote:  #b6433d;
   --ch-order:  #2d7a52;
+  --ch-email:  #0c7691;
   --ch-web:    #4a6cb3;
   --ch-e2e:    #8a4a9a;
 
@@ -136,6 +137,7 @@ html, body, #root {
 }
 .hf .chc.q { background: var(--ch-quote); }
 .hf .chc.o { background: var(--ch-order); }
+.hf .chc.m { background: var(--ch-email); }
 .hf .chc.w { background: var(--ch-web); }
 .hf .chc.e { background: var(--ch-e2e); }
 .hf .chc.s { background: linear-gradient(135deg, var(--warn) 0%, #d59c2f 100%); }
@@ -143,6 +145,7 @@ html, body, #root {
 /* Channel rail */
 .hf .ch-rail-q { box-shadow: inset 3px 0 0 var(--ch-quote); }
 .hf .ch-rail-o { box-shadow: inset 3px 0 0 var(--ch-order); }
+.hf .ch-rail-m { box-shadow: inset 3px 0 0 var(--ch-email); }
 .hf .ch-rail-w { box-shadow: inset 3px 0 0 var(--ch-web); }
 .hf .ch-rail-e { box-shadow: inset 3px 0 0 var(--ch-e2e); }
 .hf .ch-rail-s { box-shadow: inset 3px 0 0 var(--warn); }

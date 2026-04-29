@@ -43,6 +43,7 @@ export default function HFFeed({ hover, setHover, hoverDraft, channelFilter, set
         {[
           ["quote", "Quotes",  SIGNALS.filter(s => s.ch === "quote").length],
           ["order", "Orders",  SIGNALS.filter(s => s.ch === "order").length],
+          ["email", "Email",   SIGNALS.filter(s => s.ch === "email").length],
           ["web",   "TI.com",  SIGNALS.filter(s => s.ch === "web").length],
           ["e2e",   "E2E",     SIGNALS.filter(s => s.ch === "e2e").length],
           ["synth", "Synth",   SIGNALS.filter(s => s.ch === "synth").length],
