@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DRAFTS, CHANNELS, THREADS } from '../data/index.js';
+import { CHANNELS, THREADS } from '../data/index.js';
 
 const ANNOS = {
   d2: [
@@ -20,6 +20,10 @@ const ANNOS = {
 };
 
 function buildBody(d, active, setActive) {
+  // Rep-created drafts render the user-typed body verbatim — no fake annotations
+  if (d.createdByUser && d.body) {
+    return <span style={{ whiteSpace: "pre-wrap" }}>{d.body}</span>;
+  }
   if (d.id === "d2") return (
     <>
       Hi Priya,<br /><br />
@@ -65,8 +69,8 @@ function Anno({ id, kind, active, setActive, children }) {
   );
 }
 
-export default function HFDrawer({ draftId, onClose, allIds }) {
-  const d = DRAFTS.find(x => x.id === draftId);
+export default function HFDrawer({ draftId, drafts, onClose, allIds }) {
+  const d = drafts.find(x => x.id === draftId);
   const [active, setActive] = useState(null);
   const [tab, setTab] = useState("activity");
 
@@ -85,7 +89,11 @@ export default function HFDrawer({ draftId, onClose, allIds }) {
 
   if (!d) return null;
 
-  const annos = ANNOS[d.id] || ANNOS.default;
+  // Rep-created drafts get a one-line rationale explaining the intent rather than
+  // a fabricated set of "AI cited..." annotations.
+  const annos = d.createdByUser
+    ? [{ id: "a1", num: 1, kind: "ok", text: "Your intent", note: d.why?.replace(/^Manually added by you · "/, "").replace(/"$/, "") || "Manually queued by you", source: "Created by you" }]
+    : (ANNOS[d.id] || ANNOS.default);
   const currentIdx = allIds ? allIds.indexOf(draftId) : -1;
 
   return (

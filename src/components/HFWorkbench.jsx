@@ -1,13 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { SIGNALS, DRAFTS } from '../data/index.js';
+import { SIGNALS, DRAFTS, ACTIONS } from '../data/index.js';
 import HFFeed from './HFFeed.jsx';
 import HFQueue from './HFQueue.jsx';
 import HFDrawer from './HFDrawer.jsx';
+import AddActionModal from './AddActionModal.jsx';
+import LogSignalModal from './LogSignalModal.jsx';
 
-const DRAFT_IDS = DRAFTS.map(d => d.id);
 const PILOT_NUMS = [1, 2, 3];
 
 export default function HFWorkbench() {
+  // Lifted state — rep-created signals and actions are appended to the originals.
+  const [extraSignals, setExtraSignals] = useState([]);
+  const [extraActions, setExtraActions] = useState([]);
+  const allSignals = [...extraSignals, ...SIGNALS];
+  const allActions = [...extraActions, ...ACTIONS];
+  const allDrafts  = [...extraActions, ...DRAFTS];
+
   const [openId, setOpenId] = useState(null);
   // hoverContact = a contact identifier (person name, or company for synth/aggregate
   // signals) used to cross-highlight rows on both sides of the workbench.
@@ -16,6 +24,11 @@ export default function HFWorkbench() {
   const [pilots, setPilots] = useState({ 1: true, 2: false, 3: false });
   const [pilotsOpen, setPilotsOpen] = useState(false);
   const pilotsRef = useRef(null);
+
+  // Modals
+  const [addOpen, setAddOpen] = useState(false);
+  const [addPrefill, setAddPrefill] = useState(null);
+  const [logOpen, setLogOpen] = useState(false);
 
   const togglePilot = (n) => setPilots(p => ({ ...p, [n]: !p[n] }));
   const selectedPilots = PILOT_NUMS.filter(n => pilots[n]);
@@ -34,32 +47,60 @@ export default function HFWorkbench() {
     return () => document.removeEventListener("mousedown", onDown);
   }, [pilotsOpen]);
 
-  // Keyboard navigation
+  const draftIds = allDrafts.map(d => d.id);
+
+  // Keyboard navigation (no-op when a modal is open)
   useEffect(() => {
     const onKey = e => {
+      if (addOpen || logOpen) return;
       if (e.key === "Escape" && openId) {
         setOpenId(null);
         return;
       }
       if (openId) {
-        const idx = DRAFT_IDS.indexOf(openId);
+        const idx = draftIds.indexOf(openId);
         if (e.key === "ArrowUp" || e.key === "k") {
           e.preventDefault();
-          if (idx > 0) setOpenId(DRAFT_IDS[idx - 1]);
+          if (idx > 0) setOpenId(draftIds[idx - 1]);
         }
         if (e.key === "ArrowDown" || e.key === "j") {
           e.preventDefault();
-          if (idx < DRAFT_IDS.length - 1) setOpenId(DRAFT_IDS[idx + 1]);
+          if (idx < draftIds.length - 1) setOpenId(draftIds[idx + 1]);
         }
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [openId]);
+  }, [openId, addOpen, logOpen, draftIds.join("|")]);
 
   const handleDrawerNav = (newId) => {
     if (newId) setOpenId(newId);
     else setOpenId(null);
+  };
+
+  const handleAddAction = (action) => {
+    setExtraActions(prev => [action, ...prev]);
+    setAddOpen(false);
+    setAddPrefill(null);
+    // Open the new action in the drawer for review
+    setOpenId(action.id);
+  };
+
+  const handleLogSignal = (signal) => {
+    setExtraSignals(prev => [signal, ...prev]);
+    setLogOpen(false);
+  };
+
+  // "Take action" on a feed signal that didn't auto-generate one
+  const handleTakeAction = (signal) => {
+    setAddPrefill({
+      name: signal.who,
+      company: signal.co,
+      email: "",
+      type: "email-out",
+      intent: signal.text ? `Follow up: ${signal.text}` : "",
+    });
+    setAddOpen(true);
   };
 
   return (
@@ -162,10 +203,10 @@ export default function HFWorkbench() {
         <div>
           <div style={{ fontSize: 20, fontWeight: 600, letterSpacing: -0.3 }}>Good morning, Erica</div>
           <div style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 3 }}>
-            <span className="num">{SIGNALS.length}</span> signals fired since yesterday → produced{" "}
-            <span className="num">{DRAFTS.length}</span> drafts ·{" "}
+            <span className="num">{allSignals.length}</span> signals fired since yesterday → produced{" "}
+            <span className="num">{allDrafts.length}</span> drafts ·{" "}
             <span style={{ color: "var(--ok)" }}>
-              <span className="num">{DRAFTS.filter(d => d.conf === "ok").length}</span> ready to send
+              <span className="num">{allDrafts.filter(d => d.conf === "ok").length}</span> ready to send
             </span>{" "}
             · est. 14 min to clear
           </div>
@@ -182,17 +223,23 @@ export default function HFWorkbench() {
       {/* Two-column body */}
       <div style={{ flex: 1, display: "grid", gridTemplateColumns: "minmax(0, 0.95fr) minmax(0, 1.05fr)", gap: 20, padding: "0 28px 24px", minHeight: 0 }}>
         <HFFeed
+          signals={allSignals}
           hoverContact={hoverContact}
           setHoverContact={setHoverContact}
           channelFilter={channelFilter}
           setChannelFilter={setChannelFilter}
           onDraftClick={setOpenId}
+          onAddSignal={() => setLogOpen(true)}
+          onTakeAction={handleTakeAction}
         />
         <HFQueue
+          actions={allActions}
+          drafts={allDrafts}
           onOpen={id => setOpenId(openId === id ? null : id)}
           openId={openId}
           hoverContact={hoverContact}
           setHoverContact={setHoverContact}
+          onAddAction={() => { setAddPrefill(null); setAddOpen(true); }}
         />
       </div>
 
@@ -200,10 +247,23 @@ export default function HFWorkbench() {
       {openId && (
         <HFDrawer
           draftId={openId}
+          drafts={allDrafts}
           onClose={handleDrawerNav}
-          allIds={DRAFT_IDS}
+          allIds={draftIds}
         />
       )}
+
+      <AddActionModal
+        open={addOpen}
+        prefill={addPrefill}
+        onClose={() => { setAddOpen(false); setAddPrefill(null); }}
+        onSubmit={handleAddAction}
+      />
+      <LogSignalModal
+        open={logOpen}
+        onClose={() => setLogOpen(false)}
+        onSubmit={handleLogSignal}
+      />
     </div>
   );
 }

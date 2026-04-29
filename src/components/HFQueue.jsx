@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { CHANNELS, DRAFTS, ACTIONS, ACTION_TYPES } from '../data/index.js';
+import { CHANNELS, ACTION_TYPES } from '../data/index.js';
 
 const CONF_RANK = { ok: 0, warn: 1, bad: 2 };
 
@@ -7,7 +7,7 @@ const CONF_RANK = { ok: 0, warn: 1, bad: 2 };
 // company name (since there's no single recipient).
 const draftContact = (d) => (d.ch === "synth" ? d.rec.company : d.rec.name);
 
-export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact }) {
+export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact, setHoverContact, onAddAction }) {
   const [selected, setSelected] = useState({ d1: true, d3: true, d6: true, d8: true });
   const [sort, setSort] = useState("urgency");
   const [digestOpen, setDigestOpen] = useState(false);
@@ -16,18 +16,18 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
   const filterRef = useRef(null);
 
   const toggle = (id) => setSelected(s => ({ ...s, [id]: !s[id] }));
-  const greenIds = DRAFTS.filter(d => d.conf === "ok").map(d => d.id);
+  const greenIds = drafts.filter(d => d.conf === "ok").map(d => d.id);
   const selCount = Object.values(selected).filter(Boolean).length;
 
   const accountOptions = useMemo(() => {
-    const set = new Set(ACTIONS.map(a => a.rec.company));
+    const set = new Set(actions.map(a => a.rec.company));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, []);
+  }, [actions]);
 
   const visibleActions = useMemo(() => {
     let arr = accountFilter === "all"
-      ? [...ACTIONS]
-      : ACTIONS.filter(a => a.rec.company === accountFilter);
+      ? [...actions]
+      : actions.filter(a => a.rec.company === accountFilter);
 
     if (sort === "confidence") {
       arr.sort((a, b) => {
@@ -36,9 +36,9 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
         return (CONF_RANK[a.conf] ?? 99) - (CONF_RANK[b.conf] ?? 99);
       });
     }
-    // urgency: keep curated source order
+    // urgency: keep curated source order (rep-created actions are at the top via prepending)
     return arr;
-  }, [sort, accountFilter]);
+  }, [sort, accountFilter, actions]);
 
   useEffect(() => {
     if (!filterOpen) return;
@@ -57,11 +57,17 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Action Queue</div>
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
             <span className="num">{visibleActions.length}</span>
-            {visibleActions.length !== ACTIONS.length && <> of <span className="num">{ACTIONS.length}</span></>}
+            {visibleActions.length !== actions.length && <> of <span className="num">{actions.length}</span></>}
             {" "}actions · what to do &amp; why
           </div>
         </div>
         <span className="chip ok"><span className="dot ok" /> {greenIds.length} ready to send</span>
+        <button className="btn sm" title="Add a new action manually" onClick={onAddAction}>
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+            <path d="M7 2v10M2 7h10"/>
+          </svg>
+          Add action
+        </button>
         <button className="btn accent sm">
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M1 6l4 4L11 2"/>
@@ -74,7 +80,7 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
       <div style={{ padding: "8px 20px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 8, background: "var(--surface-2)" }}>
         <span
           className={"cb " + (selCount > 0 ? "checked" : "")}
-          onClick={() => setSelected(selCount > 0 ? {} : Object.fromEntries(DRAFTS.map(d => [d.id, true])))}
+          onClick={() => setSelected(selCount > 0 ? {} : Object.fromEntries(drafts.map(d => [d.id, true])))}
         />
         <span style={{ fontSize: 12, color: "var(--ink-3)" }}>
           {selCount > 0
@@ -141,11 +147,11 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
                 }}
               >
                 All accounts
-                <span style={{ marginLeft: "auto", color: "var(--ink-4)" }} className="num">{ACTIONS.length}</span>
+                <span style={{ marginLeft: "auto", color: "var(--ink-4)" }} className="num">{actions.length}</span>
               </button>
               <div style={{ height: 1, background: "var(--line)", margin: "4px 0" }} />
               {accountOptions.map(co => {
-                const n = ACTIONS.filter(a => a.rec.company === co).length;
+                const n = actions.filter(a => a.rec.company === co).length;
                 const active = accountFilter === co;
                 return (
                   <button
@@ -275,6 +281,7 @@ export default function HFQueue({ onOpen, openId, hoverContact, setHoverContact 
                   <span className="chip outline" style={{ fontSize: 10, padding: "1px 6px", height: 16, color: "var(--ink-3)" }}>
                     {ACTION_TYPES[d.actionType]?.short || "Email"}
                   </span>
+                  {d.createdByUser && <span className="by-you">Created by you</span>}
                   <span style={{ fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>
                     {d.actionType === "human"
                       ? <span style={{ color: "var(--ink-3)", fontStyle: "italic" }}>Human-led — no draft. What do you want to do?</span>

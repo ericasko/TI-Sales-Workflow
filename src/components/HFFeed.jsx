@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import { CHANNELS, SIGNALS, SYNTH_INSIGHTS } from '../data/index.js';
-
-const GROUPS = [
-  { label: "Today · Apr 28", items: SIGNALS.filter(s => !s.time.startsWith("yest") && !s.time.startsWith("Mon")) },
-  { label: "Yesterday · Apr 27", items: SIGNALS.filter(s => s.time.startsWith("yest")) },
-  { label: "Mon · Apr 26", items: SIGNALS.filter(s => s.time.startsWith("Mon")) },
-];
+import { CHANNELS, SYNTH_INSIGHTS } from '../data/index.js';
 
 // For cross-highlight purposes a contact is identified by person name,
 // except for synth/aggregate signals where there's no individual — use company.
@@ -22,11 +16,24 @@ const matchesPin = (s, pin) => {
   return s.who === pin || s.co === pin;
 };
 
-export default function HFFeed({ hoverContact, setHoverContact, channelFilter, setChannelFilter, onDraftClick }) {
+const groupSignals = (signals) => [
+  { label: "Today · Apr 28",     items: signals.filter(s => !s.time.startsWith("yest") && !s.time.startsWith("Mon")) },
+  { label: "Yesterday · Apr 27", items: signals.filter(s =>  s.time.startsWith("yest")) },
+  { label: "Mon · Apr 26",       items: signals.filter(s =>  s.time.startsWith("Mon")) },
+];
+
+export default function HFFeed({
+  signals,
+  hoverContact, setHoverContact,
+  channelFilter, setChannelFilter,
+  onDraftClick, onAddSignal, onTakeAction,
+}) {
   const [search, setSearch] = useState("");
   const [pinned, setPinned] = useState(null);
 
   const togglePin = (contact) => setPinned(p => (p === contact ? null : contact));
+
+  const groups = groupSignals(signals);
 
   const filtered = (items) => {
     let arr = channelFilter === "all" ? items : items.filter(s => s.ch === channelFilter);
@@ -42,7 +49,7 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
         <div>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Signals</div>
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
-            <span className="num">{SIGNALS.length}</span> events from your accounts
+            <span className="num">{signals.length}</span> events from your accounts
           </div>
         </div>
         <div style={{ flex: 1 }} />
@@ -54,6 +61,12 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 8a6 6 0 1 1-1.76-4.24M14 3v3h-3"/>
           </svg>
+        </button>
+        <button className="btn sm" title="Log a call, meeting, or note" onClick={onAddSignal}>
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+            <path d="M7 2v10M2 7h10"/>
+          </svg>
+          Log
         </button>
       </div>
 
@@ -105,15 +118,16 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
           onClick={() => setChannelFilter("all")}
           className={"btn xs " + (channelFilter === "all" ? "primary" : "")}
         >
-          All <span className="num" style={{ opacity: .7, marginLeft: 3 }}>{SIGNALS.length}</span>
+          All <span className="num" style={{ opacity: .7, marginLeft: 3 }}>{signals.length}</span>
         </button>
         {[
-          ["quote", "Quotes",  SIGNALS.filter(s => s.ch === "quote").length],
-          ["order", "Orders",  SIGNALS.filter(s => s.ch === "order").length],
-          ["email", "Email",   SIGNALS.filter(s => s.ch === "email").length],
-          ["web",   "TI.com",  SIGNALS.filter(s => s.ch === "web").length],
-          ["e2e",   "E2E",     SIGNALS.filter(s => s.ch === "e2e").length],
-          ["synth", "Synth",   SIGNALS.filter(s => s.ch === "synth").length],
+          ["quote", "Quotes",  signals.filter(s => s.ch === "quote").length],
+          ["order", "Orders",  signals.filter(s => s.ch === "order").length],
+          ["email", "Email",   signals.filter(s => s.ch === "email").length],
+          ["web",   "TI.com",  signals.filter(s => s.ch === "web").length],
+          ["e2e",   "E2E",     signals.filter(s => s.ch === "e2e").length],
+          ["call",  "Logged",  signals.filter(s => s.ch === "call").length],
+          ["synth", "Synth",   signals.filter(s => s.ch === "synth").length],
         ].map(([k, label, n]) => (
           <button
             key={k}
@@ -173,12 +187,12 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
 
       {/* Rolling stream */}
       <div style={{ flex: 1, overflow: "auto" }}>
-        {GROUPS.every(g => filtered(g.items).length === 0) && (
+        {groups.every(g => filtered(g.items).length === 0) && (
           <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
             No signals match {search ? `"${search}"` : pinned ? `Pinned: ${pinned}` : "this filter"}.
           </div>
         )}
-        {GROUPS.map((g, gi) => {
+        {groups.map((g, gi) => {
           const items = filtered(g.items);
           if (!items.length) return null;
           return (
@@ -194,6 +208,7 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
                 const contact = signalContact(s);
                 const dim = hoverContact && contact !== hoverContact;
                 const lit = hoverContact && contact === hoverContact;
+                const canTakeAction = !s.draftId && s.ch !== "call" && onTakeAction;
                 return (
                   <div
                     key={s.id}
@@ -225,6 +240,7 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
                     <span style={{ fontSize: 12.5, color: "var(--ink-2)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {s.text}
                     </span>
+                    {s.loggedByUser && <span className="by-you">Logged by you</span>}
                     {s.draftId && (
                       <span
                         title="Connected to a draft in the queue"
@@ -234,6 +250,19 @@ export default function HFFeed({ hoverContact, setHoverContact, channelFilter, s
                           <path d="M2 5.5h7M6 2l3.5 3.5L6 9"/>
                         </svg>
                       </span>
+                    )}
+                    {canTakeAction && (
+                      <button
+                        className="btn xs ghost"
+                        onClick={(e) => { e.stopPropagation(); onTakeAction(s); }}
+                        title="Add an action for this signal"
+                        style={{ padding: "1px 6px", height: 20 }}
+                      >
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+                          <path d="M6 1.5v9M1.5 6h9"/>
+                        </svg>
+                        Take action
+                      </button>
                     )}
                   </div>
                 );

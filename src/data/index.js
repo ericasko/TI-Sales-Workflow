@@ -4,8 +4,17 @@ export const CHANNELS = {
   email:  { code: "m", letter: "@", name: "Email",    color: "#0c7691", bg: "#dff0f3" },
   web:    { code: "w", letter: "T", name: "TI.com",   color: "#4a6cb3", bg: "#e8eef8" },
   e2e:    { code: "e", letter: "E", name: "E2E",      color: "#8a4a9a", bg: "#f1e8f4" },
+  call:   { code: "c", letter: "✎", name: "Logged",   color: "#c2660d", bg: "#fbecd8" },
   synth:  { code: "s", letter: "↯", name: "Synth",    color: "#b97509", bg: "#fcf2e0" },
 };
+
+// Subtypes for rep-logged signals (channel "call" = "Logged" in the UI)
+export const LOG_TYPES = [
+  { value: "call",    label: "Call"    },
+  { value: "meeting", label: "Meeting" },
+  { value: "note",    label: "Note"    },
+  { value: "other",   label: "Other"   },
+];
 
 export const DRAFTS = [
   { id: "d1", rec: { initials: "MK", name: "Marcus Kim",        email: "marcus.kim@volthaus.io",     company: "Volthaus Battery",   role: "Sr. Power Engineer"      }, ch: "quote", why: "Submitted quote for TPS6521905 yesterday",                   subject: "About your TPS6521905 quote — quick note on the QFN variant",              preview: "Hi Marcus — saw your quote come through for the TPS6521905. Wanted to flag that the RGE QFN package has a few layout requirements worth knowing about up front…", attach: ["TPS6521905 ds", "PMP40123"],           conf: "ok",   model: "Claude"      },

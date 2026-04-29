@@ -23,13 +23,15 @@ A clickable hi-fi prototype of a sales workbench for TI (Texas Instruments) reps
 src/
   main.jsx                      // React entry; imports global CSS
   App.jsx                       // renders <HFWorkbench />
-  data/index.js                 // CHANNELS, DRAFTS, ACTIONS, SIGNALS, THREADS, SYNTH_INSIGHTS
+  data/index.js                 // CHANNELS, DRAFTS, ACTIONS, SIGNALS, THREADS, SYNTH_INSIGHTS, LOG_TYPES
   styles/hf.css                 // design tokens + component styles (.hf scope)
   components/
-    HFWorkbench.jsx             // top-level shell: nav + greeting + 2-col layout, owns drawer state
-    HFFeed.jsx                  // left column: signals + synth insights + search/pin/channel filters
-    HFQueue.jsx                 // right column: action queue + sort/filter + auto-sent digest
+    HFWorkbench.jsx             // top-level shell: nav + greeting + 2-col layout, owns drawer + modals + lifted state
+    HFFeed.jsx                  // left column: signals + synth insights + search/pin/channel filters + Log button + take-action
+    HFQueue.jsx                 // right column: action queue + sort/filter + auto-sent digest + Add action button
     HFDrawer.jsx                // slide-over right panel: email + rationale rail + intel tabs
+    AddActionModal.jsx          // modal: rep composes new outreach (contact + intent) → AI-drafted action
+    LogSignalModal.jsx          // modal: rep logs a call/meeting/note as historical context
 project/                        // ORIGINAL Claude Design prototype files - reference only, do not edit
 chats/chat1.md                  // design conversation that produced the prototype
 ```
@@ -49,7 +51,7 @@ Reusable component classes: `.btn` (+ `.sm`/`.xs`/`.primary`/`.accent`/`.ghost`/
 
 ## Data model
 
-**Channels (6):** `quote` (Q, red), `order` (O, green), `email` (@, teal), `web` (T, blue, label "TI.com"), `e2e` (E, purple), `synth` (↯, gold gradient — synthesized AI insight, not a raw signal).
+**Channels (7):** `quote` (Q, red), `order` (O, green), `email` (@, teal), `web` (T, blue, label "TI.com"), `e2e` (E, purple), `call` (✎, amber, label "Logged" — rep-logged calls/meetings/notes), `synth` (↯, gold gradient — synthesized AI insight, not a raw signal).
 
 **DRAFTS** — 9 mock drafts, each with `{id, rec, ch, why, subject, preview, attach, conf, model, flag?, multi?}`. `conf` ∈ `ok` | `warn` | `bad`.
 
@@ -73,6 +75,11 @@ Reusable component classes: `.btn` (+ `.sm`/`.xs`/`.primary`/`.accent`/`.ghost`/
 8. **Email channel** for incoming customer emails — replies that need a response link to a reply draft; one-line "thanks" replies stay as signal-only with no action queued.
 9. **Sort vs filter:** Action Queue's sort = urgency / confidence (urgency keeps curated source order; confidence reorders ok→warn→bad with human-led pinned at bottom). Account-based filtering lives in a Filter dropdown, not a sort.
 10. **Signals filtering:** channel filter buttons + search input + click-to-pin (clicking a name or company in any row pins the filter; chip with × clears it).
+11. **Manual entry points** for when AI didn't auto-generate something:
+    - **"+ Add action"** button in the Action Queue header → opens `AddActionModal`. Rep picks contact + one-line intent; AI simulates a draft, drawer opens for review. Created action is prepended to the queue and tagged "Created by you" (`createdByUser: true`).
+    - **"+ Log"** button in the Signal panel header → opens `LogSignalModal`. Rep records a call / meeting / note (with optional notes/transcript). Logged signal lands in the feed (channel `call`) tagged "Logged by you" (`loggedByUser: true`).
+    - **"Take action"** affordance on any feed signal without a draftId → opens `AddActionModal` pre-filled with the signal's contact and a suggested intent.
+    - State for rep-created items is lifted to `HFWorkbench` (`extraSignals`, `extraActions`) and prepended to the originals before passing to children.
 
 ## Dev workflow
 
