@@ -4,7 +4,7 @@ import { DRAFTS } from '../data/index.js';
 const ACTION_TYPE_OPTIONS = [
   { value: "email-out", label: "Email · outbound" },
   { value: "call",      label: "Schedule call"    },
-  { value: "loop-pm",   label: "Loop in product"  },
+  { value: "loop-bu",   label: "Loop in BU"       },
   { value: "intro-fae", label: "Intro FAE"        },
 ];
 

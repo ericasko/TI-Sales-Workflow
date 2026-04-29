@@ -32,14 +32,14 @@ export const ACTION_TYPES = {
   "email-out":   { label: "Email · outbound", short: "Email"   },
   "email-reply": { label: "Email · reply",    short: "Reply"   },
   "call":        { label: "Schedule call",    short: "Call"    },
-  "loop-pm":     { label: "Loop in product",  short: "Loop PM" },
+  "loop-bu":     { label: "Loop in BU",       short: "Loop BU" },
   "intro-fae":   { label: "Intro FAE",        short: "Intro"   },
   "human":       { label: "Human-led action", short: "Human"   },
 };
 
 export const ACTIONS = DRAFTS.map((d, i) => ({
   ...d,
-  actionType: i === 1 ? "email-reply" : i === 3 ? "call" : i === 5 ? "loop-pm" : i === 6 ? "human" : "email-out",
+  actionType: i === 1 ? "email-reply" : i === 3 ? "call" : i === 5 ? "loop-bu" : i === 6 ? "human" : "email-out",
   needsHuman: d.flag === true || i === 6,
 }));
 
