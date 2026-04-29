@@ -88,9 +88,9 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
 
   return (
     <div className="card" style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header */}
-      <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ flex: 1 }}>
+      {/* Header — text gets minimum width; buttons wrap underneath if there's no room */}
+      <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--line)", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 12px" }}>
+        <div style={{ flex: "1 1 280px", minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.1 }}>Action Queue</div>
           <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 1 }}>
             <span className="num">{visibleActions.length}</span>
@@ -98,24 +98,26 @@ export default function HFQueue({ actions, drafts, onOpen, openId, hoverContact,
             {" "}actions · what to do &amp; why
           </div>
         </div>
-        <span className="chip ok"><span className="dot ok" /> {greenIds.length} ready to send</span>
-        <button className="btn sm" title="Add a new action manually" onClick={onAddAction}>
-          <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-            <path d="M7 2v10M2 7h10"/>
-          </svg>
-          Add action
-        </button>
-        <button
-          className="btn accent sm"
-          disabled={greenIds.length === 0}
-          onClick={sendAllGreen}
-          style={greenIds.length === 0 ? { opacity: .45, cursor: "not-allowed" } : {}}
-        >
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1 6l4 4L11 2"/>
-          </svg>
-          Send all {greenIds.length} green
-        </button>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span className="chip ok"><span className="dot ok" /> {greenIds.length} ready to send</span>
+          <button className="btn sm" title="Add a new action manually" onClick={onAddAction}>
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+              <path d="M7 2v10M2 7h10"/>
+            </svg>
+            Add action
+          </button>
+          <button
+            className="btn accent sm"
+            disabled={greenIds.length === 0}
+            onClick={sendAllGreen}
+            style={greenIds.length === 0 ? { opacity: .45, cursor: "not-allowed" } : {}}
+          >
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 6l4 4L11 2"/>
+            </svg>
+            Send all {greenIds.length} green
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
