@@ -57,11 +57,11 @@ Reusable component classes: `.btn` (+ `.sm`/`.xs`/`.primary`/`.accent`/`.ghost`/
 
 **ACTIONS** — DRAFTS with an `actionType` tag: `email-out` | `email-reply` | `call` | `loop-bu` | `intro-fae` | `human`. Drives the small chip + density variation in the queue. `loop-bu` = loop in the relevant Business Unit (TI terminology, not "Loop PM"). `human` = AI saw a trigger but deliberately won't draft anything (VIPs, negotiations, pricing, legal language); row shows "Human-led — no draft. What do you want to do?" instead of a subject.
 
-**SIGNALS** — 17 events across the 6 channels with `{id, time, ch, who, co, text, draftId, weight}`. `draftId` may be null (e.g. "thanks!" replies that don't need an action).
+**SIGNALS** — events across all channels with `{id, time, ch, who, co, text, draftId, weight}`. `draftId` may be null (e.g. "thanks!" replies that don't need an action). Synth/aggregate signals additionally carry `{title, body, sigCount}` and render with a richer two-line layout inline (no separate pinned section). `loggedByUser: true` flags rep-logged signals (channel `call`).
 
 **THREADS** — keyed by draftId; array of `{from: "us"|"them", date, body}`. Only present for drafts where the contact has prior email history (currently d1, d2, d4). Renders in the drawer's Conversation history tab, newest first.
 
-**SYNTH_INSIGHTS** — 2 pinned cards at the top of the feed; aggregate patterns across multiple signals.
+**SYNTH_INSIGHTS** — legacy export, no longer rendered. Synth content lives on synth signals directly via `title` / `body` / `sigCount`. Safe to remove if nothing else imports it.
 
 ## Key UX decisions (from design conversation)
 

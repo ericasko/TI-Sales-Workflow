@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CHANNELS, SYNTH_INSIGHTS } from '../data/index.js';
+import { CHANNELS } from '../data/index.js';
 
 // For cross-highlight purposes a contact is identified by person name,
 // except for synth/aggregate signals where there's no individual — use company.
@@ -145,48 +145,6 @@ export default function HFFeed({
         ))}
       </div>
 
-      {/* Synthesized insights */}
-      <div style={{ padding: "12px 20px 14px", borderBottom: "1px solid var(--line)", background: "var(--surface-2)" }}>
-        <div className="micro" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="var(--warn)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 1l1.5 3.5L11 5l-2.5 2 .8 4L6 9l-3.3 2L3.5 7 1 5l3.5-.5L6 1z"/>
-          </svg>
-          <span style={{ color: "var(--warn)" }}>Synthesized insights</span>
-          <span style={{ color: "var(--ink-4)" }}>· {SYNTH_INSIGHTS.length}</span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {SYNTH_INSIGHTS.map(ins => {
-            const isHovered = hoverContact === ins.co;
-            return (
-              <div
-                key={ins.id}
-                onClick={() => onDraftClick && onDraftClick(ins.draftId)}
-                onMouseEnter={() => setHoverContact && setHoverContact(ins.co)}
-                onMouseLeave={() => setHoverContact && setHoverContact(null)}
-                style={{
-                  background: isHovered ? "var(--lit-bg)" : "var(--surface)",
-                  border: "1px solid " + (isHovered ? "var(--warn)" : "var(--line)"),
-                  borderRadius: "var(--r)",
-                  padding: "10px 12px",
-                  cursor: "pointer",
-                  transition: "border-color .12s, background .12s",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span className="chc s">{CHANNELS.synth.letter}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>{ins.title}</span>
-                  <div style={{ flex: 1 }} />
-                  <span className="chip outline" style={{ fontSize: 10.5, height: 18, padding: "1px 7px" }}>
-                    {ins.sigCount} signals
-                  </span>
-                </div>
-                <div style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.45 }}>{ins.body}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Rolling stream */}
       <div style={{ flex: 1, overflow: "auto" }}>
         {groups.every(g => filtered(g.items).length === 0) && (
@@ -211,6 +169,55 @@ export default function HFFeed({
                 const dim = hoverContact && contact !== hoverContact;
                 const lit = hoverContact && contact === hoverContact;
                 const canTakeAction = !s.draftId && s.ch !== "call" && onTakeAction;
+                const isSynth = s.ch === "synth" && (s.title || s.body);
+
+                if (isSynth) {
+                  // Richer two-line row: synth/aggregate insights have a headline + summary.
+                  return (
+                    <div
+                      key={s.id}
+                      onMouseEnter={() => setHoverContact && setHoverContact(contact)}
+                      onMouseLeave={() => setHoverContact && setHoverContact(null)}
+                      onClick={() => s.draftId && onDraftClick && onDraftClick(s.draftId)}
+                      className={"feed-row ch-rail-" + ch.code + (lit ? " lit" : "") + (dim ? " dim" : "")}
+                      style={{ alignItems: "flex-start", whiteSpace: "normal", padding: "10px 14px 11px 11px", background: lit ? undefined : "var(--surface-2)" }}
+                    >
+                      <span className={"chc " + ch.code} style={{ marginTop: 1 }}>{ch.letter}</span>
+                      <span className="num" style={{ width: 56, fontSize: 11.5, color: "var(--ink-4)", flexShrink: 0, marginTop: 2 }}>
+                        {s.time}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                          <span
+                            className="who-link"
+                            style={{ fontSize: 12.5, fontWeight: 600, color: "var(--ink-2)" }}
+                            onClick={(e) => { e.stopPropagation(); togglePin(s.co); }}
+                            title={pinned === s.co ? "Click to unpin" : "Click to pin filter to " + s.co}
+                          >
+                            {s.co}
+                          </span>
+                          <span style={{ fontSize: 12.5, color: "var(--ink-4)" }}>—</span>
+                          <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--warn)" }}>{s.title}</span>
+                          <div style={{ flex: 1 }} />
+                          {s.sigCount && (
+                            <span className="chip outline" style={{ fontSize: 10.5, height: 18, padding: "1px 7px" }}>
+                              {s.sigCount} signals
+                            </span>
+                          )}
+                          {s.draftId && (
+                            <span title="Connected to a draft in the queue" style={{ color: "var(--ink-5)", display: "inline-flex", alignItems: "center" }}>
+                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+                                <path d="M2 5.5h7M6 2l3.5 3.5L6 9"/>
+                              </svg>
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.45 }}>{s.body}</div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={s.id}
